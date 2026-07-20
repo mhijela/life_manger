@@ -61,11 +61,11 @@
             </button>
         </div>
         <div class="col-12 d-flex gap-2">
-            <a href="{% url 'daily_tasks:list' %}?date={{ today|date:'Y-m-d' }}" class="btn btn-sm btn-outline-primary">
-                مهام اليوم
-            </a>
-            <a href="{% url 'daily_tasks:list' %}?date=" class="btn btn-sm btn-outline-secondary">
+            <a href="{% url 'daily_tasks:list' %}" class="btn btn-sm btn-outline-primary{% if not selected_date %} active{% endif %}">
                 كل المهام
+            </a>
+            <a href="{% url 'daily_tasks:list' %}?date={{ today|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary{% if selected_date == today|date:'Y-m-d' %} active{% endif %}">
+                مهام اليوم
             </a>
         </div>
     </form>

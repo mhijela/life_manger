@@ -16,14 +16,12 @@ def list_view(request):
     queryset = DailyTask.objects.select_related(
         'assigned_to', 'subscriber', 'device', 'created_by'
     )
-    selected_date = request.GET.get('date')
+    selected_date = request.GET.get('date', '')
     status = request.GET.get('status', '')
     task_type = request.GET.get('type', '')
     assigned_to = request.GET.get('assigned_to', '')
     search = request.GET.get('q', '').strip()
 
-    if selected_date is None:
-        selected_date = timezone.localdate().isoformat()
     if selected_date:
         queryset = queryset.filter(scheduled_date=selected_date)
     if status:
