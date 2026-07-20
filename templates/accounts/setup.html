@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block auth_content %}
+<div class="login-page">
+    <div class="login-visual d-none d-lg-flex">
+        <div class="login-visual-content">
+            <h1>إعداد النظام<br>لأول مرة</h1>
+            <p>أنشئ حساب المدير الرئيسي للبدء في إدارة الشبكة من مكان واحد.</p>
+            <ul class="login-features">
+                <li><i class="bi bi-shield-lock-fill"></i> حساب مدير بصلاحيات كاملة</li>
+                <li><i class="bi bi-people-fill"></i> إدارة المشتركين والباقات</li>
+                <li><i class="bi bi-cash-stack"></i> المالية والديون</li>
+                <li><i class="bi bi-gear-fill"></i> إعدادات النظام لاحقاً من اللوحة</li>
+            </ul>
+        </div>
+    </div>
+    <div class="login-form-panel">
+        <div class="login-card">
+            <div class="login-logo"><i class="bi bi-person-gear"></i></div>
+            <h4>إعداد المدير</h4>
+            <p class="login-subtitle">هذه الخطوة تظهر مرة واحدة فقط عند أول تشغيل</p>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger mb-3">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                    <div class="input-icon-wrap">
+                        <i class="bi bi-person"></i>
+                        {{ form.first_name }}
+                    </div>
+                    {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors }}</div>{% endif %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                    <div class="input-icon-wrap">
+                        <i class="bi bi-envelope"></i>
+                        {{ form.email }}
+                    </div>
+                    {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors }}</div>{% endif %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+                    <div class="input-icon-wrap">
+                        <i class="bi bi-lock"></i>
+                        {{ form.password1 }}
+                    </div>
+                    {% if form.password1.help_text %}<div class="form-text">{{ form.password1.help_text }}</div>{% endif %}
+                    {% if form.password1.errors %}<div class="text-danger small mt-1">{{ form.password1.errors }}</div>{% endif %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+                    <div class="input-icon-wrap">
+                        <i class="bi bi-lock-fill"></i>
+                        {{ form.password2 }}
+                    </div>
+                    {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors }}</div>{% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary w-100">إنشاء حساب المدير والدخول</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

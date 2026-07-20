@@ -94,12 +94,10 @@ docker-compose exec web python manage.py load_demo_data
 
 5. فعّل HTTPS للنطاق → **Deploy**
 
-### الخطوة 3 — مستخدم المدير
-من Terminal لحاوية `web`:
-```bash
-python manage.py createsuperuser
-```
-
+### الخطوة 3 — إعداد المدير (أول مرة)
+بعد فتح الموقع ستظهر شاشة **إعداد المدير** تلقائياً.
+أدخل الاسم والبريد وكلمة المرور — ثم تدخل مباشرة للوحة التحكم.
+(لا حاجة لأمر `createsuperuser` من التيرمنال)
 ### ملاحظات
 - الترحيلات و`collectstatic` تتم تلقائياً عند إقلاع `web`
 - Volume `media_data` يحفظ الملفات المرفوعة
