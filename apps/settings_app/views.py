@@ -357,24 +357,43 @@ def _unregister_backup_sqlite_db(alias='backup_src'):
     connections.databases.pop(alias, None)
 
 
+def _user_fk_field_map():
+    """Map fixture model labels to ForeignKey field names pointing at accounts.User."""
+    from django.apps import apps
+    from django.db.models import ForeignKey
+
+    mapping = {}
+    for model in apps.get_models():
+        names = [
+            field.name
+            for field in model._meta.fields
+            if isinstance(field, ForeignKey)
+            and getattr(field.remote_field.model._meta, 'label', None) == 'accounts.User'
+        ]
+        if names:
+            mapping[model._meta.label_lower] = names
+    return mapping
+
+
 def _rewrite_user_fks_in_fixture(raw_json, fallback_user_id=None):
-    """Point nullable user FKs at the current Coolify user (or null)."""
+    """Rewrite all User FKs (created_by, assigned_to, …) to the current Coolify user."""
     import json
 
     objects = json.loads(raw_json or '[]')
+    field_map = _user_fk_field_map()
     for obj in objects:
+        model = (obj.get('model') or '').lower()
         fields = obj.get('fields') or {}
-        if 'created_by' in fields:
-            fields['created_by'] = fallback_user_id
-        if obj.get('model') == 'accounts.userprofile':
-            continue
+        for fname in field_map.get(model, ()):
+            if fname in fields and fields[fname] is not None:
+                fields[fname] = fallback_user_id
     return json.dumps(objects)
 
 
-def _import_sqlite_into_postgres(sqlite_path, fallback_user_id=None):
+def _import_sqlite_into_postgres(sqlite_path, fallback_user_id=None, users_snapshot=None):
     """
     Migrate business data from a local SQLite backup into the current PostgreSQL DB.
-    Users are intentionally excluded (caller restores the pre-import snapshot).
+    Users are restored after flush and before loaddata so FK resolution stays valid.
     """
     from io import StringIO
     from django.core.management import call_command
@@ -387,7 +406,6 @@ def _import_sqlite_into_postgres(sqlite_path, fallback_user_id=None):
             'dumpdata',
             database=alias,
             exclude=SQLITE_IMPORT_EXCLUDE,
-            natural_foreign=True,
             stdout=buf,
             verbosity=0,
         )
@@ -396,6 +414,9 @@ def _import_sqlite_into_postgres(sqlite_path, fallback_user_id=None):
             fh.write(fixture_json)
 
         call_command('flush', interactive=False, database='default', verbosity=0)
+        # Users must exist before loaddata (tasks/payments reference them).
+        if users_snapshot:
+            _restore_local_users(users_snapshot)
         if fixture_json.strip() not in ('', '[]'):
             call_command('loaddata', fixture_path, database='default', verbosity=0)
     finally:
@@ -489,8 +510,11 @@ def _restore_backup(request):
     else:
         if _is_sqlite_file(filepath):
             try:
-                _import_sqlite_into_postgres(filepath, fallback_user_id=request.user.pk)
-                _restore_local_users(users_snapshot)
+                _import_sqlite_into_postgres(
+                    filepath,
+                    fallback_user_id=request.user.pk,
+                    users_snapshot=users_snapshot,
+                )
                 messages.success(
                     request,
                     'تم استيراد بيانات SQLite إلى PostgreSQL (مع الإبقاء على المستخدمين الحاليين).',
