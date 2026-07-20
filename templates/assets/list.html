@@ -1,6 +1,63 @@
 {% extends 'base.html' %}
 {% block title %}الأصول{% endblock %}
+{% block breadcrumb %}الأصول{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between mb-3"><h4>الأصول</h4><a href="{% url 'assets:create' %}" class="btn btn-primary">إضافة أصل</a></div>
-<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>الاسم</th><th>التسلسلي</th><th>الفئة</th><th>مُسلّم إلى</th><th>الحالة</th><th></th></tr></thead><tbody>{% for a in page_obj %}<tr><td><a href="{% url 'assets:detail' a.pk %}">{{ a.name }}</a></td><td>{{ a.serial_number|default:"-" }}</td><td>{{ a.category }}</td><td>{{ a.assigned_to|default:"-" }}</td><td>{{ a.get_status_display }}</td><td>{% if a.status == 'assigned' %}<form method="post" action="{% url 'assets:return' a.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-warning">إرجاع</button></form>{% endif %}</td></tr>{% empty %}<tr><td colspan="6" class="text-center text-muted">لا توجد أصول</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="mlist-page">
+    <div class="page-header">
+        <div><h4 class="page-heading">الأصول</h4></div>
+        <div class="page-actions d-none d-md-flex">
+            <a href="{% url 'assets:create' %}" class="btn btn-primary">إضافة أصل</a>
+        </div>
+    </div>
+
+    {% if page_obj %}
+    <div class="mlist-feed d-md-none">
+        {% for a in page_obj %}
+        <article class="mlist-item {% if a.status == 'assigned' %}is-warning{% elif a.status == 'available' %}is-success{% else %}is-muted{% endif %}">
+            <div class="mlist-item-top">
+                <div>
+                    <h3 class="mlist-title"><a href="{% url 'assets:detail' a.pk %}">{{ a.name }}</a></h3>
+                    <div class="mlist-kicker">{{ a.category }}{% if a.serial_number %} · {{ a.serial_number }}{% endif %}</div>
+                </div>
+                <span class="mlist-status {% if a.status == 'assigned' %}is-warning{% elif a.status == 'available' %}is-success{% endif %}">{{ a.get_status_display }}</span>
+            </div>
+            <div class="mlist-details">
+                <div class="mlist-detail"><i class="bi bi-person"></i><span>{{ a.assigned_to|default:"غير مُسلّم" }}</span></div>
+            </div>
+            <div class="mlist-actions">
+                <a href="{% url 'assets:detail' a.pk %}" class="btn btn-primary flex-grow-1">عرض</a>
+                {% if a.status == 'assigned' %}
+                <form method="post" action="{% url 'assets:return' a.pk %}">{% csrf_token %}<button class="btn btn-warning">إرجاع</button></form>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <div class="card d-none d-md-block">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead><tr><th>الاسم</th><th>التسلسلي</th><th>الفئة</th><th>مُسلّم إلى</th><th>الحالة</th><th></th></tr></thead>
+                <tbody>
+                    {% for a in page_obj %}
+                    <tr>
+                        <td><a href="{% url 'assets:detail' a.pk %}">{{ a.name }}</a></td>
+                        <td>{{ a.serial_number|default:"-" }}</td>
+                        <td>{{ a.category }}</td>
+                        <td>{{ a.assigned_to|default:"-" }}</td>
+                        <td>{{ a.get_status_display }}</td>
+                        <td>{% if a.status == 'assigned' %}<form method="post" action="{% url 'assets:return' a.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-warning">إرجاع</button></form>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="mlist-empty"><i class="bi bi-laptop"></i><p>لا توجد أصول</p></div>
+    {% endif %}
+
+    <a href="{% url 'assets:create' %}" class="mlist-fab d-md-none" aria-label="إضافة أصل"><i class="bi bi-plus-lg"></i></a>
+</div>
 {% endblock %}

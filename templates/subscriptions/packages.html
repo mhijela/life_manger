@@ -3,30 +3,67 @@
 {% block breadcrumb %}
 <a href="{% url 'settings_app:index' %}?tab=subscriptions" class="text-muted text-decoration-none">الإعدادات</a> / الباقات
 {% endblock %}
+
 {% block content %}
-<div class="page-header">
-    <div>
-        <h4 class="page-heading">باقات الإنترنت</h4>
-        <p class="page-desc">تُستخدم عند إضافة مشترك جديد أو تجديد الاشتراك من صفحة المشترك</p>
+<div class="mlist-page">
+    <div class="page-header">
+        <div>
+            <h4 class="page-heading">باقات الإنترنت</h4>
+            <p class="page-desc d-none d-md-block">تُستخدم عند إضافة مشترك جديد أو تجديد الاشتراك من صفحة المشترك</p>
+        </div>
+        <div class="page-actions d-none d-md-flex">
+            <a href="{% url 'subscribers:list' %}" class="btn btn-outline-secondary"><i class="bi bi-people"></i> المشتركون</a>
+            <a href="{% url 'subscriptions:package_create' %}" class="btn btn-primary">إضافة باقة</a>
+        </div>
     </div>
-    <div class="page-actions">
-        <a href="{% url 'subscribers:list' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-people"></i> المشتركون
-        </a>
-        <a href="{% url 'subscriptions:package_create' %}" class="btn btn-primary">إضافة باقة</a>
-    </div>
-</div>
-<div class="card"><div class="table-responsive"><table class="table mb-0">
-    <thead><tr><th>الاسم</th><th>السرعة</th><th>السعر</th><th>المدة</th><th>الحالة</th><th></th></tr></thead>
-    <tbody>
+
+    {% if packages %}
+    <div class="mlist-feed d-md-none">
         {% for p in packages %}
-        <tr>
-            <td>{{ p.name }}</td><td>{{ p.speed }}</td><td>{{ p.price }}</td>
-            <td>{{ p.duration_value }} {{ p.get_duration_type_display }}</td>
-            <td>{% if p.is_active %}<span class="badge bg-success">نشطة</span>{% else %}<span class="badge bg-secondary">معطلة</span>{% endif %}</td>
-            <td><a href="{% url 'subscriptions:package_edit' p.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a></td>
-        </tr>
-        {% empty %}<tr><td colspan="6" class="text-center text-muted">لا توجد باقات</td></tr>{% endfor %}
-    </tbody>
-</table></div></div>
+        <article class="mlist-item {% if p.is_active %}is-success{% else %}is-muted{% endif %}">
+            <div class="mlist-item-top">
+                <div>
+                    <h3 class="mlist-title">{{ p.name }}</h3>
+                    <div class="mlist-kicker">{{ p.speed }}</div>
+                </div>
+                {% if p.is_active %}
+                <span class="mlist-status is-success">نشطة</span>
+                {% else %}
+                <span class="mlist-status">معطلة</span>
+                {% endif %}
+            </div>
+            <div class="mlist-details">
+                <div class="mlist-detail"><i class="bi bi-cash"></i><span class="mlist-amount">{{ p.price }} {{ system_settings.currency_symbol }}</span></div>
+                <div class="mlist-detail"><i class="bi bi-clock"></i><span>{{ p.duration_value }} {{ p.get_duration_type_display }}</span></div>
+            </div>
+            <div class="mlist-actions">
+                <a href="{% url 'subscriptions:package_edit' p.pk %}" class="btn btn-outline-primary flex-grow-1"><i class="bi bi-pencil"></i> تعديل</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <div class="card d-none d-md-block">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead><tr><th>الاسم</th><th>السرعة</th><th>السعر</th><th>المدة</th><th>الحالة</th><th></th></tr></thead>
+                <tbody>
+                    {% for p in packages %}
+                    <tr>
+                        <td>{{ p.name }}</td><td>{{ p.speed }}</td><td>{{ p.price }}</td>
+                        <td>{{ p.duration_value }} {{ p.get_duration_type_display }}</td>
+                        <td>{% if p.is_active %}<span class="badge bg-success">نشطة</span>{% else %}<span class="badge bg-secondary">معطلة</span>{% endif %}</td>
+                        <td><a href="{% url 'subscriptions:package_edit' p.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="mlist-empty"><i class="bi bi-box"></i><p>لا توجد باقات</p><a href="{% url 'subscriptions:package_create' %}" class="btn btn-primary">إضافة باقة</a></div>
+    {% endif %}
+
+    <a href="{% url 'subscriptions:package_create' %}" class="mlist-fab d-md-none" aria-label="إضافة باقة"><i class="bi bi-plus-lg"></i></a>
+</div>
 {% endblock %}

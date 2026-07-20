@@ -1,6 +1,62 @@
 {% extends 'base.html' %}
 {% block title %}الأجهزة{% endblock %}
+{% block breadcrumb %}الأجهزة{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between mb-3"><h4>الأجهزة الشبكية</h4><a href="{% url 'devices:create' %}" class="btn btn-primary">إضافة جهاز</a></div>
-<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>الاسم</th><th>النوع</th><th>IP</th><th>الموقع</th><th>الحالة</th><th></th></tr></thead><tbody>{% for d in page_obj %}<tr><td><a href="{% url 'devices:detail' d.pk %}">{{ d.name }}</a></td><td>{{ d.get_device_type_display }}</td><td>{{ d.ip_address|default:"-" }}</td><td>{{ d.location|default:"-" }}</td><td>{{ d.get_status_display }}</td><td><a href="{% url 'devices:edit' d.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a></td></tr>{% empty %}<tr><td colspan="6" class="text-center text-muted">لا توجد أجهزة</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="mlist-page">
+    <div class="page-header">
+        <div><h4 class="page-heading">الأجهزة الشبكية</h4></div>
+        <div class="page-actions d-none d-md-flex">
+            <a href="{% url 'devices:create' %}" class="btn btn-primary">إضافة جهاز</a>
+        </div>
+    </div>
+
+    {% if page_obj %}
+    <div class="mlist-feed d-md-none">
+        {% for d in page_obj %}
+        <article class="mlist-item {% if d.status == 'active' %}is-success{% elif d.status == 'damaged' or d.status == 'maintenance' %}is-warning{% else %}is-muted{% endif %}">
+            <div class="mlist-item-top">
+                <div>
+                    <h3 class="mlist-title"><a href="{% url 'devices:detail' d.pk %}">{{ d.name }}</a></h3>
+                    <div class="mlist-kicker">{{ d.get_device_type_display }}</div>
+                </div>
+                <span class="mlist-status {% if d.status == 'active' %}is-success{% elif d.status == 'damaged' or d.status == 'maintenance' %}is-warning{% endif %}">{{ d.get_status_display }}</span>
+            </div>
+            <div class="mlist-details">
+                {% if d.ip_address %}<div class="mlist-detail"><i class="bi bi-hdd-network"></i><span dir="ltr">{{ d.ip_address }}</span></div>{% endif %}
+                {% if d.location %}<div class="mlist-detail"><i class="bi bi-geo-alt"></i><span>{{ d.location }}</span></div>{% endif %}
+            </div>
+            <div class="mlist-actions">
+                <a href="{% url 'devices:detail' d.pk %}" class="btn btn-primary flex-grow-1">عرض</a>
+                <a href="{% url 'devices:edit' d.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i></a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <div class="card d-none d-md-block">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead><tr><th>الاسم</th><th>النوع</th><th>IP</th><th>الموقع</th><th>الحالة</th><th></th></tr></thead>
+                <tbody>
+                    {% for d in page_obj %}
+                    <tr>
+                        <td><a href="{% url 'devices:detail' d.pk %}">{{ d.name }}</a></td>
+                        <td>{{ d.get_device_type_display }}</td>
+                        <td>{{ d.ip_address|default:"-" }}</td>
+                        <td>{{ d.location|default:"-" }}</td>
+                        <td>{{ d.get_status_display }}</td>
+                        <td><a href="{% url 'devices:edit' d.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="mlist-empty"><i class="bi bi-router"></i><p>لا توجد أجهزة</p></div>
+    {% endif %}
+
+    <a href="{% url 'devices:create' %}" class="mlist-fab d-md-none" aria-label="إضافة جهاز"><i class="bi bi-plus-lg"></i></a>
+</div>
 {% endblock %}

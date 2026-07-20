@@ -1,6 +1,67 @@
 {% extends 'base.html' %}
 {% block title %}المخزون{% endblock %}
+{% block breadcrumb %}المخزون{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between mb-3"><h4>المخزون</h4><div class="d-flex gap-2"><a href="{% url 'inventory:movement' %}" class="btn btn-outline-primary">حركة مخزون</a><a href="{% url 'inventory:create' %}" class="btn btn-primary">إضافة صنف</a></div></div>
-<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>الصنف</th><th>الفئة</th><th>الكمية</th><th>الوحدة</th><th>الحد الأدنى</th><th>الحالة</th><th></th></tr></thead><tbody>{% for i in page_obj %}<tr><td>{{ i.name }}</td><td>{{ i.category|default:"-" }}</td><td>{{ i.quantity }}</td><td>{{ i.unit }}</td><td>{{ i.min_stock }}</td><td>{% if i.is_low_stock %}<span class="badge bg-danger">منخفض</span>{% else %}<span class="badge bg-success">جيد</span>{% endif %}</td><td><a href="{% url 'inventory:edit' i.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a></td></tr>{% empty %}<tr><td colspan="7" class="text-center text-muted">لا توجد أصناف</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="mlist-page">
+    <div class="page-header">
+        <div><h4 class="page-heading">المخزون</h4></div>
+        <div class="page-actions d-none d-md-flex">
+            <a href="{% url 'inventory:movement' %}" class="btn btn-outline-primary">حركة مخزون</a>
+            <a href="{% url 'inventory:create' %}" class="btn btn-primary">إضافة صنف</a>
+        </div>
+    </div>
+
+    {% if page_obj %}
+    <div class="mlist-feed d-md-none">
+        {% for i in page_obj %}
+        <article class="mlist-item {% if i.is_low_stock %}is-danger{% else %}is-success{% endif %}">
+            <div class="mlist-item-top">
+                <div>
+                    <h3 class="mlist-title">{{ i.name }}</h3>
+                    <div class="mlist-kicker">{{ i.category|default:"بدون فئة" }}</div>
+                </div>
+                {% if i.is_low_stock %}
+                <span class="mlist-status is-danger">منخفض</span>
+                {% else %}
+                <span class="mlist-status is-success">جيد</span>
+                {% endif %}
+            </div>
+            <div class="mlist-details">
+                <div class="mlist-detail"><i class="bi bi-box-seam"></i><span>{{ i.quantity }} {{ i.unit }}</span></div>
+                <div class="mlist-detail"><i class="bi bi-arrow-down-circle"></i><span>الحد الأدنى: {{ i.min_stock }}</span></div>
+            </div>
+            <div class="mlist-actions">
+                <a href="{% url 'inventory:edit' i.pk %}" class="btn btn-outline-primary flex-grow-1"><i class="bi bi-pencil"></i> تعديل</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <div class="card d-none d-md-block">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead><tr><th>الصنف</th><th>الفئة</th><th>الكمية</th><th>الوحدة</th><th>الحد الأدنى</th><th>الحالة</th><th></th></tr></thead>
+                <tbody>
+                    {% for i in page_obj %}
+                    <tr>
+                        <td>{{ i.name }}</td>
+                        <td>{{ i.category|default:"-" }}</td>
+                        <td>{{ i.quantity }}</td>
+                        <td>{{ i.unit }}</td>
+                        <td>{{ i.min_stock }}</td>
+                        <td>{% if i.is_low_stock %}<span class="badge bg-danger">منخفض</span>{% else %}<span class="badge bg-success">جيد</span>{% endif %}</td>
+                        <td><a href="{% url 'inventory:edit' i.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="mlist-empty"><i class="bi bi-boxes"></i><p>لا توجد أصناف</p></div>
+    {% endif %}
+
+    <a href="{% url 'inventory:create' %}" class="mlist-fab d-md-none" aria-label="إضافة صنف"><i class="bi bi-plus-lg"></i></a>
+</div>
 {% endblock %}

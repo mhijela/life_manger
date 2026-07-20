@@ -1,37 +1,73 @@
 {% extends 'base.html' %}
 {% block title %}الاشتراكات{% endblock %}
+{% block breadcrumb %}الاشتراكات{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between mb-3">
-    <h4>الاشتراكات</h4>
-    <div class="d-flex gap-2">
-        <a href="{% url 'subscriptions:packages' %}" class="btn btn-outline-primary">الباقات</a>
-        <a href="{% url 'subscriptions:create' %}" class="btn btn-primary">إضافة اشتراك</a>
+<div class="mlist-page">
+    <div class="page-header">
+        <div>
+            <h4 class="page-heading">الاشتراكات</h4>
+        </div>
+        <div class="page-actions d-none d-md-flex">
+            <a href="{% url 'subscriptions:packages' %}" class="btn btn-outline-primary">الباقات</a>
+            <a href="{% url 'subscriptions:create' %}" class="btn btn-primary">إضافة اشتراك</a>
+        </div>
     </div>
-</div>
-<div class="card">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>المشترك</th><th>الباقة</th><th>البداية</th><th>النهاية</th><th>الحالة</th><th>السعر</th><th>إجراءات</th></tr></thead>
-            <tbody>
-                {% for s in page_obj %}
-                <tr>
-                    <td><a href="{% url 'subscribers:detail' s.subscriber.pk %}">{{ s.subscriber.full_name }}</a></td>
-                    <td>{{ s.package.name }}</td>
-                    <td>{{ s.start_date }}</td>
-                    <td>{{ s.end_date }}</td>
-                    <td>{{ s.get_status_display }}</td>
-                    <td>{{ s.price }} {{ system_settings.currency_symbol }}</td>
-                    <td>
-                        <a href="{% url 'subscriptions:renew' s.pk %}" class="btn btn-sm btn-success">تجديد</a>
-                        {% if s.status == 'active' %}
-                        <form method="post" action="{% url 'subscriptions:expire' s.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-warning">إنهاء</button></form>
-                        <form method="post" action="{% url 'subscriptions:suspend' s.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-secondary">إيقاف</button></form>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}<tr><td colspan="7" class="text-center text-muted py-4">لا توجد اشتراكات</td></tr>{% endfor %}
-            </tbody>
-        </table>
+
+    {% if page_obj %}
+    <div class="mlist-feed d-md-none">
+        {% for s in page_obj %}
+        <article class="mlist-item {% if s.status == 'active' %}is-success{% elif s.status == 'expired' %}is-danger{% else %}is-muted{% endif %}">
+            <div class="mlist-item-top">
+                <h3 class="mlist-title"><a href="{% url 'subscribers:detail' s.subscriber.pk %}">{{ s.subscriber.full_name }}</a></h3>
+                <span class="mlist-status {% if s.status == 'active' %}is-success{% elif s.status == 'expired' %}is-danger{% endif %}">{{ s.get_status_display }}</span>
+            </div>
+            <div class="mlist-details">
+                <div class="mlist-detail"><i class="bi bi-box"></i><span>{{ s.package.name }}</span></div>
+                <div class="mlist-detail"><i class="bi bi-calendar-range"></i><span>{{ s.start_date }} → {{ s.end_date }}</span></div>
+                <div class="mlist-detail"><i class="bi bi-cash"></i><span class="mlist-amount">{{ s.price }} {{ system_settings.currency_symbol }}</span></div>
+            </div>
+            <div class="mlist-actions">
+                <a href="{% url 'subscriptions:renew' s.pk %}" class="btn btn-success flex-grow-1">تجديد</a>
+                {% if s.status == 'active' %}
+                <form method="post" action="{% url 'subscriptions:expire' s.pk %}">{% csrf_token %}<button class="btn btn-outline-warning">إنهاء</button></form>
+                <form method="post" action="{% url 'subscriptions:suspend' s.pk %}">{% csrf_token %}<button class="btn btn-outline-secondary">إيقاف</button></form>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
     </div>
+
+    <div class="card d-none d-md-block">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr><th>المشترك</th><th>الباقة</th><th>البداية</th><th>النهاية</th><th>الحالة</th><th>السعر</th><th>إجراءات</th></tr></thead>
+                <tbody>
+                    {% for s in page_obj %}
+                    <tr>
+                        <td><a href="{% url 'subscribers:detail' s.subscriber.pk %}">{{ s.subscriber.full_name }}</a></td>
+                        <td>{{ s.package.name }}</td>
+                        <td>{{ s.start_date }}</td>
+                        <td>{{ s.end_date }}</td>
+                        <td>{{ s.get_status_display }}</td>
+                        <td>{{ s.price }} {{ system_settings.currency_symbol }}</td>
+                        <td>
+                            <a href="{% url 'subscriptions:renew' s.pk %}" class="btn btn-sm btn-success">تجديد</a>
+                            {% if s.status == 'active' %}
+                            <form method="post" action="{% url 'subscriptions:expire' s.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-warning">إنهاء</button></form>
+                            <form method="post" action="{% url 'subscriptions:suspend' s.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-secondary">إيقاف</button></form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="mlist-empty"><i class="bi bi-calendar-check"></i><p>لا توجد اشتراكات</p></div>
+    {% endif %}
+
+    <a href="{% url 'subscriptions:create' %}" class="mlist-fab d-md-none" aria-label="إضافة اشتراك"><i class="bi bi-plus-lg"></i></a>
 </div>
 {% endblock %}

@@ -3,152 +3,174 @@
 {% block breadcrumb %}الديون{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h4 class="page-heading">الديون</h4>
-        <p class="page-desc">متابعة ديون المشتركين وإرسال تذكيرات SMS</p>
+<div class="mlist-page">
+    <div class="page-header">
+        <div>
+            <h4 class="page-heading">الديون</h4>
+            <p class="page-desc d-none d-md-block">متابعة ديون المشتركين وإرسال تذكيرات SMS</p>
+        </div>
+        <div class="page-actions d-none d-md-flex">
+            {% if debtors_count %}
+            <form method="post" action="{% url 'finance:debt_send_all_sms' %}" class="d-inline"
+                  onsubmit="return confirm('إرسال SMS تذكير بالدين إلى {{ debtors_count }} مدين؟\nسيتم إرسال رسالة واحدة لكل مشترك بمجموع المبلغ المستحق.')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-primary"
+                        {% if not sms_configured or not debt_sms_template %}disabled{% endif %}>
+                    <i class="bi bi-send"></i> SMS لكل المديونين ({{ debtors_count }})
+                </button>
+            </form>
+            {% endif %}
+            <a href="{% url 'finance:debt_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> إضافة دين
+            </a>
+        </div>
     </div>
-    <div class="page-actions">
-        {% if debtors_count %}
-        <form method="post" action="{% url 'finance:debt_send_all_sms' %}" class="d-inline"
-              onsubmit="return confirm('إرسال SMS تذكير بالدين إلى {{ debtors_count }} مدين؟\nسيتم إرسال رسالة واحدة لكل مشترك بمجموع المبلغ المستحق.')">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-outline-primary"
-                    {% if not sms_configured or not debt_sms_template %}disabled{% endif %}>
-                <i class="bi bi-send"></i> SMS لكل المديونين ({{ debtors_count }})
-            </button>
-        </form>
+
+    {% if not sms_configured %}
+    <div class="alert alert-warning mb-3">
+        <i class="bi bi-exclamation-triangle"></i>
+        إعدادات MTC SMS غير مكتملة —
+        <a href="{% url 'settings_app:index' %}?tab=sms">أكمل الإعدادات</a>
+    </div>
+    {% elif not debt_sms_template %}
+    <div class="alert alert-warning mb-3">
+        <i class="bi bi-exclamation-triangle"></i>
+        لم يتم تحديد قالب تذكير الدين —
+        <a href="{% url 'settings_app:index' %}?tab=finance">اختر القالب من الإعدادات</a>
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'finance:debt_bulk' %}" id="debtsBulkForm">
+        {% csrf_token %}
+
+        <div id="bulkActionsBar" class="bulk-actions-bar d-none">
+            <div class="bulk-actions-info">
+                <span class="bulk-actions-count"><span id="selectedCount">0</span> محدد</span>
+                <button type="button" class="btn btn-link btn-sm p-0 text-muted" id="clearSelection">إلغاء التحديد</button>
+            </div>
+            <div class="bulk-actions-buttons">
+                <button type="submit" name="action" value="send_sms" class="btn btn-sm btn-primary"
+                        {% if not sms_configured or not debt_sms_template %}disabled{% endif %}
+                        onclick="return confirmBulkSms()">
+                    <i class="bi bi-chat-dots"></i> إرسال SMS للمحددين
+                </button>
+                <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger"
+                        onclick="return confirmBulkDelete(this)">
+                    <i class="bi bi-trash3"></i> حذف المحددين
+                </button>
+            </div>
+        </div>
+
+        {% if page_obj %}
+        <div class="mlist-feed d-md-none">
+            {% for d in page_obj %}
+            <article class="mlist-item {% if d.status == 'paid' %}is-success{% else %}is-danger{% endif %}">
+                <div class="mlist-item-top">
+                    <div class="mlist-item-top-start">
+                        <input type="checkbox" class="form-check-input mlist-check debt-checkbox" name="ids"
+                               value="{{ d.pk }}" data-status="{{ d.status }}">
+                        <div>
+                            <h3 class="mlist-title">{{ d.subscriber }}</h3>
+                            <div class="mlist-kicker">استحقاق {{ d.due_date }}</div>
+                        </div>
+                    </div>
+                    <span class="mlist-status {% if d.status == 'paid' %}is-success{% else %}is-danger{% endif %}">{{ d.get_status_display }}</span>
+                </div>
+                <div class="mlist-details">
+                    <div class="mlist-detail"><i class="bi bi-cash-stack"></i><span>الإجمالي {{ d.total_amount }} · المدفوع {{ d.paid_amount }}</span></div>
+                    <div class="mlist-detail"><i class="bi bi-exclamation-circle"></i><span class="mlist-amount is-danger">متبقي {{ d.remaining_amount }} {{ system_settings.currency_symbol }}</span></div>
+                </div>
+                {% if d.status != 'paid' %}
+                <div class="mlist-actions">
+                    <a href="{% url 'finance:debt_pay' d.pk %}" class="btn btn-success flex-grow-1"><i class="bi bi-cash"></i> سداد</a>
+                    <button type="button" class="btn btn-outline-primary btn-single-sms"
+                            data-url="{% url 'finance:debt_send_sms' d.pk %}"
+                            data-name="{{ d.subscriber.full_name }}"
+                            data-amount="{{ d.remaining_amount }} {{ system_settings.currency_symbol }}"
+                            {% if not sms_configured or not debt_sms_template %}disabled{% endif %}>
+                        <i class="bi bi-chat-dots"></i>
+                    </button>
+                </div>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+
+        <div class="card d-none d-md-block">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:42px">
+                                <input type="checkbox" class="form-check-input" id="selectAllDebts" title="تحديد الكل">
+                            </th>
+                            <th>المشترك</th>
+                            <th>الإجمالي</th>
+                            <th>المدفوع</th>
+                            <th>المتبقي</th>
+                            <th>الاستحقاق</th>
+                            <th>الحالة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in page_obj %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input debt-checkbox" name="ids"
+                                       value="{{ d.pk }}" data-status="{{ d.status }}">
+                            </td>
+                            <td>{{ d.subscriber }}</td>
+                            <td>{{ d.total_amount }} {{ system_settings.currency_symbol }}</td>
+                            <td>{{ d.paid_amount }} {{ system_settings.currency_symbol }}</td>
+                            <td class="fw-semibold text-danger">{{ d.remaining_amount }} {{ system_settings.currency_symbol }}</td>
+                            <td>{{ d.due_date }}</td>
+                            <td>{{ d.get_status_display }}</td>
+                            <td>
+                                <div class="btn-action-group">
+                                    {% if d.status != 'paid' %}
+                                    <a href="{% url 'finance:debt_pay' d.pk %}" class="btn btn-sm btn-success" title="سداد">
+                                        <i class="bi bi-cash"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-single-sms" title="إرسال SMS"
+                                            data-url="{% url 'finance:debt_send_sms' d.pk %}"
+                                            data-name="{{ d.subscriber.full_name }}"
+                                            data-amount="{{ d.remaining_amount }} {{ system_settings.currency_symbol }}"
+                                            {% if not sms_configured or not debt_sms_template %}disabled{% endif %}>
+                                        <i class="bi bi-chat-dots"></i>
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted small">—</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="mlist-empty"><i class="bi bi-wallet2"></i><p>لا توجد ديون</p></div>
         {% endif %}
-        <a href="{% url 'finance:debt_create' %}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> إضافة دين
-        </a>
-    </div>
-</div>
 
-{% if not sms_configured %}
-<div class="alert alert-warning mb-3">
-    <i class="bi bi-exclamation-triangle"></i>
-    إعدادات MTC SMS غير مكتملة —
-    <a href="{% url 'settings_app:index' %}?tab=sms">أكمل الإعدادات</a>
-</div>
-{% elif not debt_sms_template %}
-<div class="alert alert-warning mb-3">
-    <i class="bi bi-exclamation-triangle"></i>
-    لم يتم تحديد قالب تذكير الدين —
-    <a href="{% url 'settings_app:index' %}?tab=finance">اختر القالب من الإعدادات</a>
-</div>
-{% endif %}
-
-<form method="post" action="{% url 'finance:debt_bulk' %}" id="debtsBulkForm">
-    {% csrf_token %}
-
-    <div id="bulkActionsBar" class="bulk-actions-bar d-none">
-        <div class="bulk-actions-info">
-            <span class="bulk-actions-count"><span id="selectedCount">0</span> محدد</span>
-            <button type="button" class="btn btn-link btn-sm p-0 text-muted" id="clearSelection">إلغاء التحديد</button>
-        </div>
-        <div class="bulk-actions-buttons">
-            <button type="submit" name="action" value="send_sms" class="btn btn-sm btn-primary"
-                    {% if not sms_configured or not debt_sms_template %}disabled{% endif %}
-                    onclick="return confirmBulkSms()">
-                <i class="bi bi-chat-dots"></i> إرسال SMS للمحددين
-            </button>
-            <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger"
-                    onclick="return confirmBulkDelete(this)">
-                <i class="bi bi-trash3"></i> حذف المحددين
-            </button>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th style="width:42px">
-                            <input type="checkbox" class="form-check-input" id="selectAllDebts" title="تحديد الكل">
-                        </th>
-                        <th>المشترك</th>
-                        <th>الإجمالي</th>
-                        <th>المدفوع</th>
-                        <th>المتبقي</th>
-                        <th>الاستحقاق</th>
-                        <th>الحالة</th>
-                        <th>إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for d in page_obj %}
-                    <tr>
-                        <td>
-                            <input type="checkbox" class="form-check-input debt-checkbox" name="ids"
-                                   value="{{ d.pk }}" data-status="{{ d.status }}">
-                        </td>
-                        <td>{{ d.subscriber }}</td>
-                        <td>{{ d.total_amount }} {{ system_settings.currency_symbol }}</td>
-                        <td>{{ d.paid_amount }} {{ system_settings.currency_symbol }}</td>
-                        <td class="fw-semibold text-danger">{{ d.remaining_amount }} {{ system_settings.currency_symbol }}</td>
-                        <td>{{ d.due_date }}</td>
-                        <td>{{ d.get_status_display }}</td>
-                        <td>
-                            <div class="btn-action-group">
-                                {% if d.status != 'paid' %}
-                                <a href="{% url 'finance:debt_pay' d.pk %}" class="btn btn-sm btn-success" title="سداد">
-                                    <i class="bi bi-cash"></i>
-                                </a>
-                                <button type="button" class="btn btn-sm btn-outline-primary btn-single-sms" title="إرسال SMS"
-                                        data-url="{% url 'finance:debt_send_sms' d.pk %}"
-                                        data-name="{{ d.subscriber.full_name }}"
-                                        data-amount="{{ d.remaining_amount }} {{ system_settings.currency_symbol }}"
-                                        {% if not sms_configured or not debt_sms_template %}disabled{% endif %}>
-                                    <i class="bi bi-chat-dots"></i>
-                                </button>
-                                {% else %}
-                                <span class="text-muted small">—</span>
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr class="empty-row">
-                        <td colspan="8">
-                            <div class="empty-state">
-                                <i class="bi bi-wallet2"></i>
-                                لا توجد ديون
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
         {% if page_obj.has_other_pages %}
-        <div class="card-footer">
-            <nav>
-                <ul class="pagination justify-content-center mb-0">
-                    {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                            <i class="bi bi-chevron-right"></i> السابق
-                        </a>
-                    </li>
-                    {% endif %}
-                    <li class="page-item active">
-                        <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-                    </li>
-                    {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                            التالي <i class="bi bi-chevron-left"></i>
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
+        <nav class="mlist-pagination">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">السابق</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">التالي</a></li>
+                {% endif %}
+            </ul>
+        </nav>
         {% endif %}
-    </div>
-</form>
+    </form>
+
+    <a href="{% url 'finance:debt_create' %}" class="mlist-fab d-md-none" aria-label="إضافة دين"><i class="bi bi-plus-lg"></i></a>
+</div>
 
 <form method="post" id="singleSmsForm" style="display:none">{% csrf_token %}</form>
 {% endblock %}
@@ -162,17 +184,24 @@
     const countEl = document.getElementById('selectedCount');
     const clearBtn = document.getElementById('clearSelection');
 
+    function isMobile() {
+        return window.matchMedia('(max-width: 767.98px)').matches;
+    }
+
     function getCheckboxes() {
-        return form.querySelectorAll('.debt-checkbox');
+        return form.querySelectorAll(
+            isMobile() ? '.mlist-feed .debt-checkbox' : '.table .debt-checkbox'
+        );
     }
 
     function getChecked() {
-        return form.querySelectorAll('.debt-checkbox:checked');
+        return Array.from(getCheckboxes()).filter(cb => cb.checked);
     }
 
     function updateBulkBar() {
         const checked = getChecked();
-        const total = getCheckboxes().length;
+        const boxes = getCheckboxes();
+        const total = boxes.length;
         countEl.textContent = checked.length;
         bulkBar.classList.toggle('d-none', checked.length === 0);
 
@@ -187,12 +216,17 @@
         updateBulkBar();
     });
 
-    getCheckboxes().forEach(cb => cb.addEventListener('change', updateBulkBar));
+    form.querySelectorAll('.debt-checkbox').forEach(cb => cb.addEventListener('change', updateBulkBar));
 
     clearBtn?.addEventListener('click', () => {
-        getCheckboxes().forEach(cb => { cb.checked = false; });
+        form.querySelectorAll('.debt-checkbox').forEach(cb => { cb.checked = false; });
         if (selectAll) selectAll.checked = false;
         updateBulkBar();
+    });
+
+    form.addEventListener('submit', () => {
+        const hideSel = isMobile() ? '.table .debt-checkbox' : '.mlist-feed .debt-checkbox';
+        form.querySelectorAll(hideSel).forEach(cb => { cb.disabled = true; });
     });
 
     document.querySelectorAll('.btn-single-sms').forEach(btn => {
