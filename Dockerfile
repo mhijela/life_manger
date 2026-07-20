@@ -17,14 +17,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN chmod +x /app/entrypoint.sh \
+RUN chmod +x /app/entrypoint.sh /app/healthcheck.sh \
     && mkdir -p /app/media /app/staticfiles
 
 EXPOSE 8000
 
-# Coolify may set PORT=3000; /healthz always returns 200
+# Do not put ${VAR} inline here — Coolify injects ARGs and breaks Dockerfile parsing.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
-    CMD-SHELL curl -fsS "http://127.0.0.1:${PORT:-8000}/healthz/" || exit 1
+    CMD ["/app/healthcheck.sh"]
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120"]
