@@ -7,6 +7,10 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = [
     h.strip() for h in config('ALLOWED_HOSTS', default='localhost').split(',') if h.strip()
 ]
+# Coolify / Docker healthchecks hit 127.0.0.1 — must be allowed or Django returns 400
+for _host in ('localhost', '127.0.0.1'):
+    if _host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_host)
 
 # Coolify / reverse-proxy HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

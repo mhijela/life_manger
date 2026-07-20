@@ -11,6 +11,7 @@ class InitialSetupMiddleware:
     EXEMPT_PREFIXES = (
         '/static/',
         '/media/',
+        '/healthz/',
         '/accounts/setup/',
     )
 

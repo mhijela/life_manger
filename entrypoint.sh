@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.settings.production}"
+
 echo "Waiting for database..."
 python <<'PY'
 import os
