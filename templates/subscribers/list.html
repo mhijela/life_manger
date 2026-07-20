@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block title %}المشتركون{% endblock %}
+{% block breadcrumb %}المشتركون{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h4 class="page-heading">المشتركون</h4>
+        <p class="page-desc">إضافة مشترك مع اشتراكه، والتجديد والقبض من صفحة كل زبون</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'subscriptions:packages' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-box"></i> الباقات
+        </a>
+        <a href="{% url 'subscribers:create' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> إضافة مشترك
+        </a>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-lg-3 col-md-6">
+            <label class="form-label mb-1">بحث</label>
+            <input type="text" name="q" class="form-control" placeholder="اسم أو هاتف..." value="{{ search }}">
+        </div>
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label mb-1">حالة الاشتراك</label>
+            <select name="subscription_state" class="form-select">
+                <option value="">كل الاشتراكات</option>
+                {% for val, label in subscription_state_choices %}
+                <option value="{{ val }}" {% if current_subscription_state == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label mb-1">المنطقة</label>
+            <select name="area" class="form-select">
+                <option value="">كل المناطق</option>
+                {% for area in areas %}
+                <option value="{{ area.pk }}" {% if current_area == area.pk|stringformat:"s" %}selected{% endif %}>{{ area.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label mb-1">عدد الأسطر</label>
+            <select name="per_page" class="form-select" onchange="this.form.submit()">
+                {% for value in per_page_options %}
+                <option value="{{ value }}" {% if per_page == value %}selected{% endif %}>{{ value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-3 col-md-12">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i> بحث
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th class="text-center">الهاتف</th>
+                    <th>المنطقة</th>
+                    <th>حالة الاشتراك</th>
+                    <th>السعر</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in page_obj %}
+                <tr>
+                    <td><a href="{% url 'subscribers:detail' s.pk %}">{{ s.full_name }}</a></td>
+                    <td dir="ltr" class="text-center">{{ s.phone }}</td>
+                    <td>{{ s.area|default:"—" }}</td>
+                    <td>
+                        {% with sub=s.subscription_list.0 %}
+                            {% if not sub %}
+                            <span class="badge bg-secondary">بدون اشتراك</span>
+                            {% elif sub.status == 'suspended' %}
+                            <span class="badge bg-secondary">موقوف</span>
+                            {% elif sub.status == 'expired' or sub.end_date < today %}
+                            <span class="badge bg-danger">منتهي</span>
+                            {% elif sub.days_remaining <= 7 %}
+                            <span class="badge bg-warning text-dark">ينتهي قريباً</span>
+                            {% else %}
+                            <span class="badge bg-success">ساري</span>
+                            {% endif %}
+                            {% if sub %}
+                            <div class="small text-muted mt-1">
+                                {{ sub.package.name }} — حتى {{ sub.end_date }}
+                                {% if sub.auto_renew %}<i class="bi bi-arrow-repeat text-success" title="تجديد تلقائي"></i>{% endif %}
+                            </div>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>{{ s.monthly_price }} {{ system_settings.currency_symbol }}</td>
+                    <td>
+                        <div class="btn-action-group">
+                            <a href="{% url 'subscribers:edit' s.pk %}" class="btn btn-sm btn-outline-primary" title="تعديل">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger" title="حذف" onclick="confirmDelete('{% url 'subscribers:delete' s.pk %}')">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="bi bi-people"></i>
+                            لا يوجد مشتركون — <a href="{% url 'subscribers:create' %}">أضف أول مشترك</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if page_obj.has_other_pages %}
+    <div class="card-footer">
+        <nav>
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search|default:'' }}&subscription_state={{ current_subscription_state|default:'' }}&area={{ current_area|default:'' }}&per_page={{ per_page }}">
+                        <i class="bi bi-chevron-right"></i> السابق
+                    </a>
+                </li>
+                {% endif %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search|default:'' }}&subscription_state={{ current_subscription_state|default:'' }}&area={{ current_area|default:'' }}&per_page={{ per_page }}">
+                        التالي <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block auth_content %}
+<div class="login-page">
+    <div class="login-visual d-none d-lg-flex">
+        <div class="login-visual-content">
+            <h1>إدارة شبكتك<br>بكل سهولة</h1>
+            <p>نظام متكامل لإدارة المشتركين، الاشتراكات، المالية، والمخزون — في مكان واحد.</p>
+            <ul class="login-features">
+                <li><i class="bi bi-people-fill"></i> إدارة المشتركين والباقات</li>
+                <li><i class="bi bi-cash-stack"></i> متابعة الدفعات والديون</li>
+                <li><i class="bi bi-chat-dots-fill"></i> إرسال رسائل SMS تلقائياً</li>
+                <li><i class="bi bi-bar-chart-fill"></i> تقارير وإحصائيات شاملة</li>
+            </ul>
+        </div>
+    </div>
+    <div class="login-form-panel">
+        <div class="login-card">
+            <div class="login-logo"><i class="bi bi-wifi"></i></div>
+            <h4>مرحباً بك</h4>
+            <p class="login-subtitle">سجّل دخولك للوصول إلى لوحة التحكم</p>
+            <form method="post">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger mb-3">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <div class="mb-3">
+                    <label class="form-label">{{ form.username.label }}</label>
+                    <div class="input-icon-wrap">
+                        <i class="bi bi-envelope"></i>
+                        {{ form.username }}
+                    </div>
+                    {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors }}</div>{% endif %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ form.password.label }}</label>
+                    <div class="input-icon-wrap">
+                        <i class="bi bi-lock"></i>
+                        {{ form.password }}
+                    </div>
+                    {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors }}</div>{% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-box-arrow-in-left"></i> تسجيل الدخول
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

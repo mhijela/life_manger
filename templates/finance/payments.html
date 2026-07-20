@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}الدفعات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+    <h4>الدفعات</h4>
+    <div class="d-flex gap-2">
+        <a href="{% url 'finance:jawwal_payment' %}" class="btn btn-outline-success btn-sm"><i class="bi bi-phone"></i> Jawwal Pay</a>
+        <a href="{% url 'finance:payment_create' %}" class="btn btn-primary">إضافة</a>
+    </div>
+</div>
+<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>المشترك</th><th>المبلغ</th><th>التاريخ</th><th>الطريقة</th></tr></thead><tbody>{% for p in page_obj %}<tr><td>{{ p.subscriber|default:"-" }}</td><td>{{ p.amount }}</td><td>{{ p.payment_date }}</td><td>{{ p.method }}</td></tr>{% empty %}<tr><td colspan="4" class="text-center text-muted">لا توجد دفعات</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

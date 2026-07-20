@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}الرسائل{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+    <h4>الرسائل</h4>
+    <div class="d-flex gap-2">
+        <a href="{% url 'messages:send' %}" class="btn btn-primary">إرسال فردي</a>
+        <a href="{% url 'messages:bulk' %}" class="btn btn-outline-primary">إرسال جماعي</a>
+        <a href="{% url 'messages:templates' %}" class="btn btn-outline-secondary">القوالب</a>
+    </div>
+</div>
+{% if sms_configured %}
+<div class="alert alert-info py-2">
+    <i class="bi bi-phone"></i> MTC SMS —
+    {% if sms_balance.success %}الرصيد: <strong>{{ sms_balance.balance }}</strong>{% else %}{{ sms_balance.error|default:"" }}{% endif %}
+</div>
+{% else %}
+<div class="alert alert-warning py-2">إعدادات MTC SMS غير مكتملة. <a href="{% url 'settings_app:index' %}">اضبطها من الإعدادات</a></div>
+{% endif %}
+<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>المستلم</th><th>الحالة</th><th>التاريخ</th><th>النص</th></tr></thead><tbody>{% for m in page_obj %}<tr><td>{{ m.recipient }}</td><td>{{ m.get_status_display }}</td><td>{{ m.created_at|date:"Y-m-d H:i" }}</td><td>{{ m.body|truncatechars:50 }}</td></tr>{% empty %}<tr><td colspan="4" class="text-center text-muted">لا توجد رسائل</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

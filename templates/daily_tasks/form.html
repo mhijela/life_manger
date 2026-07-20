@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block breadcrumb %}
+<a href="{% url 'daily_tasks:list' %}" class="text-muted text-decoration-none">المهام اليومية</a> / {{ title }}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-9">
+        <div class="card form-card">
+            <div class="card-header">{{ title }}</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label" for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}<div class="text-danger small mt-1">{{ form.title.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="{{ form.task_type.id_for_label }}">{{ form.task_type.label }}</label>
+                            {{ form.task_type }}
+                            {% if form.task_type.errors %}<div class="text-danger small mt-1">{{ form.task_type.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label" for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}<div class="text-danger small mt-1">{{ form.description.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="{{ form.scheduled_date.id_for_label }}">{{ form.scheduled_date.label }}</label>
+                            {{ form.scheduled_date }}
+                            {% if form.scheduled_date.errors %}<div class="text-danger small mt-1">{{ form.scheduled_date.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="{{ form.scheduled_time.id_for_label }}">{{ form.scheduled_time.label }}</label>
+                            {{ form.scheduled_time }}
+                            {% if form.scheduled_time.errors %}<div class="text-danger small mt-1">{{ form.scheduled_time.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="{{ form.assigned_to.id_for_label }}">{{ form.assigned_to.label }}</label>
+                            {{ form.assigned_to }}
+                            {% if form.assigned_to.errors %}<div class="text-danger small mt-1">{{ form.assigned_to.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.priority.id_for_label }}">{{ form.priority.label }}</label>
+                            {{ form.priority }}
+                            {% if form.priority.errors %}<div class="text-danger small mt-1">{{ form.priority.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}<div class="text-danger small mt-1">{{ form.status.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-3">الارتباط والموقع <span class="text-muted small">(اختياري)</span></h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.subscriber.id_for_label }}">{{ form.subscriber.label }}</label>
+                            {{ form.subscriber }}
+                            {% if form.subscriber.errors %}<div class="text-danger small mt-1">{{ form.subscriber.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.device.id_for_label }}">{{ form.device.label }}</label>
+                            {{ form.device }}
+                            {% if form.device.errors %}<div class="text-danger small mt-1">{{ form.device.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label" for="{{ form.location.id_for_label }}">{{ form.location.label }}</label>
+                            {{ form.location }}
+                            {% if form.location.errors %}<div class="text-danger small mt-1">{{ form.location.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label" for="{{ form.completion_notes.id_for_label }}">{{ form.completion_notes.label }}</label>
+                            {{ form.completion_notes }}
+                            {% if form.completion_notes.errors %}<div class="text-danger small mt-1">{{ form.completion_notes.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 pt-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> حفظ
+                        </button>
+                        <a href="{% url 'daily_tasks:list' %}" class="btn btn-secondary">إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

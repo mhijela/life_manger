@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><title>{{ title }}</title>
+<style>body{font-family:Tajawal,sans-serif;direction:rtl}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:right}th{background:#f0f4f8}</style>
+</head>
+<body>
+<h2>{{ title }}</h2>
+{% if date_from or date_to %}<p>من {{ date_from }} إلى {{ date_to }}</p>{% endif %}
+<table><thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+<tbody>{% for row in rows %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>
+</body></html>

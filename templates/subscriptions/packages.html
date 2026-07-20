@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}الباقات{% endblock %}
+{% block breadcrumb %}
+<a href="{% url 'settings_app:index' %}?tab=subscriptions" class="text-muted text-decoration-none">الإعدادات</a> / الباقات
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h4 class="page-heading">باقات الإنترنت</h4>
+        <p class="page-desc">تُستخدم عند إضافة مشترك جديد أو تجديد الاشتراك من صفحة المشترك</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'subscribers:list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-people"></i> المشتركون
+        </a>
+        <a href="{% url 'subscriptions:package_create' %}" class="btn btn-primary">إضافة باقة</a>
+    </div>
+</div>
+<div class="card"><div class="table-responsive"><table class="table mb-0">
+    <thead><tr><th>الاسم</th><th>السرعة</th><th>السعر</th><th>المدة</th><th>الحالة</th><th></th></tr></thead>
+    <tbody>
+        {% for p in packages %}
+        <tr>
+            <td>{{ p.name }}</td><td>{{ p.speed }}</td><td>{{ p.price }}</td>
+            <td>{{ p.duration_value }} {{ p.get_duration_type_display }}</td>
+            <td>{% if p.is_active %}<span class="badge bg-success">نشطة</span>{% else %}<span class="badge bg-secondary">معطلة</span>{% endif %}</td>
+            <td><a href="{% url 'subscriptions:package_edit' p.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a></td>
+        </tr>
+        {% empty %}<tr><td colspan="6" class="text-center text-muted">لا توجد باقات</td></tr>{% endfor %}
+    </tbody>
+</table></div></div>
+{% endblock %}

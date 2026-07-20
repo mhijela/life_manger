@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}تجديد اشتراك{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-6"><div class="card">
+    <div class="card-header">تجديد اشتراك: {{ subscription.subscriber.full_name }}</div>
+    <div class="card-body"><form method="post">{% csrf_token %}
+        {% for field in form %}<div class="mb-3"><label>{{ field.label }}</label>{{ field }}</div>{% endfor %}
+        <button type="submit" class="btn btn-success">تجديد</button>
+        <a href="{% url 'subscribers:detail' subscription.subscriber_id %}" class="btn btn-secondary">إلغاء</a>
+    </form></div>
+</div></div></div>
+{% endblock %}

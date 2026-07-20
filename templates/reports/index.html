@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}التقارير{% endblock %}
+{% block content %}
+<h4 class="mb-3">التقارير</h4>
+<div class="row g-3">{% for key, label in report_types.items %}<div class="col-md-4"><div class="card"><div class="card-body text-center"><h6>{{ label }}</h6><a href="{% url 'reports:report' key %}" class="btn btn-primary btn-sm mt-2">عرض التقرير</a></div></div></div>{% endfor %}</div>
+{% endblock %}

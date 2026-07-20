@@ -1,0 +1,20 @@
+{
+  "captured_at": "2026-07-12T20:57:33.931081+00:00",
+  "analysis": "Automated capture without manual login in browser window",
+  "auth_endpoints": {
+    "login_page": "GET /login/auth",
+    "login_post": "POST /login/authenticate",
+    "login_fields": ["username", "password", "lang", "fingerprint"],
+    "identify": "GET /login/identify?lang=ar_PS&username=...",
+    "change_lang": "POST /login/changeLang"
+  },
+  "merchant_endpoints": {
+    "request_payment_page": "GET /merchant/requestPaymentServices",
+    "unauthenticated_redirect": "302 -> /login/auth"
+  },
+  "checkout_api_public": {
+    "note": "Separate online checkout gateway (not business portal)",
+    "iframe_url": "https://checkout.jawwalpay.ps/api/acceptance/iframes/{iframeId}?payment_token={token}"
+  },
+  "next_step": "Export HAR from logged-in Simple Browser session to discover POST endpoints for transfer and SMS payment request"
+}

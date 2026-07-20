@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}طرق الدفع{% endblock %}
+{% block breadcrumb %}
+<a href="{% url 'settings_app:index' %}?tab=finance" class="text-muted text-decoration-none">الإعدادات</a> / طرق الدفع
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h4 class="page-heading">طرق الدفع</h4>
+        <p class="page-desc">إدارة الطرق المتاحة عند تسجيل الدفعات وسداد الديون</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'settings_app:index' %}?tab=finance" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-right"></i> الإعدادات المالية
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card form-card">
+            <div class="card-header">
+                {% if editing_method %}تعديل طريقة الدفع{% else %}إضافة طريقة دفع{% endif %}
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="form-check mb-3">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-check-lg"></i> حفظ
+                        </button>
+                        {% if editing_method %}
+                        <a href="{% url 'settings_app:payment_methods' %}" class="btn btn-secondary">إلغاء</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">طرق الدفع المسجلة</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الحالة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for method in methods %}
+                        <tr>
+                            <td>{{ method.name }}</td>
+                            <td>
+                                {% if method.is_active %}
+                                <span class="badge bg-success">مفعّلة</span>
+                                {% else %}
+                                <span class="badge bg-secondary">معطلة</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-action-group">
+                                    <a href="{% url 'settings_app:payment_method_edit' method.pk %}" class="btn btn-sm btn-outline-primary" title="تعديل">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" action="{% url 'settings_app:payment_method_toggle' method.pk %}">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-outline-warning" title="{% if method.is_active %}تعطيل{% else %}تفعيل{% endif %}">
+                                            <i class="bi bi-power"></i>
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'settings_app:payment_method_delete' method.pk %}"
+                                          onsubmit="return confirm('هل تريد حذف طريقة الدفع؟')">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-outline-danger" title="حذف">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">
+                                لا توجد طرق دفع. أضف أول طريقة من النموذج.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

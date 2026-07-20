@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}قوالب الرسائل{% endblock %}
+{% block breadcrumb %}قوالب الرسائل{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h4 class="page-heading">قوالب الرسائل</h4>
+        <p class="page-desc">إدارة قوالب SMS المستخدمة في التذكيرات والإرسال الجماعي</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'messages:template_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> إضافة قالب
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th>النوع</th>
+                    <th>القناة</th>
+                    <th>النص</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in templates %}
+                <tr>
+                    <td class="fw-semibold">{{ t.name }}</td>
+                    <td>{{ t.get_template_type_display }}</td>
+                    <td>{{ t.get_channel_display }}</td>
+                    <td class="text-muted">{{ t.body|truncatechars:60 }}</td>
+                    <td>
+                        {% if t.is_active %}
+                        <span class="badge bg-success">نشط</span>
+                        {% else %}
+                        <span class="badge bg-secondary">معطّل</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-action-group">
+                            <a href="{% url 'messages:template_edit' t.pk %}" class="btn btn-sm btn-outline-primary" title="تعديل">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger" title="حذف"
+                                    onclick="confirmDelete('{% url 'messages:template_delete' t.pk %}')">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="bi bi-chat-square-text"></i>
+                            لا توجد قوالب — <a href="{% url 'messages:template_create' %}">أضف أول قالب</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

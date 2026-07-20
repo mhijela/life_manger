@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}نتائج البحث{% if query %}: {{ query }}{% endif %}{% endblock %}
+{% block breadcrumb %}نتائج البحث{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h4 class="page-heading">نتائج البحث</h4>
+        {% if query %}
+        <p class="page-desc">{{ total }} نتيجة لـ «{{ query }}»</p>
+        {% else %}
+        <p class="page-desc">اكتب كلمة البحث في الشريط العلوي</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if query %}
+    {% if groups %}
+        {% for group in groups %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-search"></i> {{ group.label }}
+                <span class="badge bg-secondary ms-1">{{ group.items|length }}</span>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for item in group.items %}
+                <li class="list-group-item d-flex align-items-center gap-3">
+                    <span class="search-result-icon"><i class="bi {{ item.icon }}"></i></span>
+                    <div class="flex-grow-1 min-w-0">
+                        <a href="{{ item.url }}" class="fw-semibold text-decoration-none">{{ item.title }}</a>
+                        <div class="text-muted small text-truncate">{{ item.subtitle }}</div>
+                    </div>
+                    <a href="{{ item.url }}" class="btn btn-sm btn-outline-primary">فتح</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="card">
+        <div class="empty-state py-5">
+            <i class="bi bi-search"></i>
+            لا توجد نتائج لـ «{{ query }}»
+        </div>
+    </div>
+    {% endif %}
+{% else %}
+<div class="card">
+    <div class="empty-state py-5">
+        <i class="bi bi-search"></i>
+        ابحث من الشريط العلوي بالاسم أو الجوال — النتيجة تفتح صفحة عمليات المشترك مباشرة
+    </div>
+</div>
+{% endif %}
+{% endblock %}

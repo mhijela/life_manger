@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}المالية{% endblock %}
+{% block breadcrumb %}المالية{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h4 class="page-heading">المالية</h4>
+        <p class="page-desc">متابعة الدخل والمصروفات والديون</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card stat-primary">
+            <div class="card-body">
+                <div class="stat-label">رصيد الصندوق</div>
+                <div class="stat-value">{{ balance|floatformat:0|intcomma }} <small class="text-muted fs-6">{{ system_settings.currency_symbol }}</small></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card stat-success">
+            <div class="card-body">
+                <div class="stat-label">دخل الشهر</div>
+                <div class="stat-value text-success">{{ monthly_income|floatformat:0|intcomma }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card stat-danger">
+            <div class="card-body">
+                <div class="stat-label">مصروفات الشهر</div>
+                <div class="stat-value text-danger">{{ monthly_expenses|floatformat:0|intcomma }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-label">ربح الشهر</div>
+                <div class="stat-value">{{ monthly_profit|floatformat:0|intcomma }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="quick-actions mb-4">
+    <a href="{% url 'finance:payment_create' %}" class="quick-action-btn"><i class="bi bi-cash-coin"></i> تسجيل دفعة</a>
+    <a href="{% url 'finance:jawwal_payment' %}" class="quick-action-btn"><i class="bi bi-phone"></i> Jawwal Pay — طلب دفعة</a>
+    <a href="{% url 'finance:expense_create' %}" class="quick-action-btn"><i class="bi bi-receipt"></i> تسجيل مصروف</a>
+    <a href="{% url 'finance:debt_create' %}" class="quick-action-btn"><i class="bi bi-exclamation-circle"></i> تسجيل دين</a>
+    <a href="{% url 'finance:payments' %}" class="quick-action-btn"><i class="bi bi-list-ul"></i> الدفعات</a>
+    <a href="{% url 'finance:expenses' %}" class="quick-action-btn"><i class="bi bi-list-ul"></i> المصروفات</a>
+    <a href="{% url 'finance:debts' %}" class="quick-action-btn"><i class="bi bi-list-ul"></i> الديون</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-cash-stack"></i> آخر الدفعات</div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th>المشترك</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
+                    <tbody>
+                        {% for p in recent_payments %}
+                        <tr>
+                            <td>{{ p.subscriber|default:"—" }}</td>
+                            <td class="text-success fw-semibold">{{ p.amount }}</td>
+                            <td>{{ p.payment_date }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr class="empty-row"><td colspan="3">لا توجد دفعات</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-receipt"></i> آخر المصروفات</div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th>العنوان</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
+                    <tbody>
+                        {% for e in recent_expenses %}
+                        <tr>
+                            <td>{{ e.title }}</td>
+                            <td class="text-danger fw-semibold">{{ e.amount }}</td>
+                            <td>{{ e.date }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr class="empty-row"><td colspan="3">لا توجد مصروفات</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

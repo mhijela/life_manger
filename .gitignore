@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Django
+*.log
+db.sqlite3
+media/
+staticfiles/
+
+# Environment
+.env
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+.cursor/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups
+media/backups/
+
+# Jawwal Pay session/capture (sensitive)
+tools/jawwal_session_cookies.json
+tools/jawwal_sessions/
+tools/jawwal_mobile_session.json
+tools/jawwal_session*.json
+tools/jawwal_captured_requests.json
+tools/*.har
+tools/jawwal_login*.html
+tools/merchant_page.html

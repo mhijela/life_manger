@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block breadcrumb %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.package-autocomplete { position: relative; }
+.package-suggestions {
+    position: absolute;
+    z-index: 1050;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,.1);
+    display: none;
+}
+.package-suggestions.show { display: block; }
+.package-suggestion {
+    padding: 0.55rem 0.85rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f3f5;
+}
+.package-suggestion:last-child { border-bottom: none; }
+.package-suggestion:hover,
+.package-suggestion.active { background: #f8f9fa; }
+.package-suggestion.add-new {
+    color: var(--bs-primary);
+    font-weight: 500;
+}
+.package-selected-info {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card form-card">
+            <div class="card-header">{{ title }}</div>
+            <div class="card-body">
+                <form method="post" id="subscriber-create-form">
+                    {% csrf_token %}
+
+                    <h6 class="text-muted mb-3">بيانات المشترك</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
+                            {{ form.full_name }}
+                            {% if form.full_name.errors %}<div class="text-danger small mt-1">{{ form.full_name.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}<div class="text-danger small mt-1">{{ form.phone.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.pppoe_username.id_for_label }}">{{ form.pppoe_username.label }} <span class="text-muted small">(اختياري)</span></label>
+                            {{ form.pppoe_username }}
+                            {% if form.pppoe_username.errors %}<div class="text-danger small mt-1">{{ form.pppoe_username.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.pppoe_password.id_for_label }}">{{ form.pppoe_password.label }} <span class="text-muted small">(اختياري)</span></label>
+                            {{ form.pppoe_password }}
+                            {% if form.pppoe_password.errors %}<div class="text-danger small mt-1">{{ form.pppoe_password.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+                    <h6 class="text-muted mb-3">بيانات الاشتراك</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.subscription_start_date.id_for_label }}">{{ form.subscription_start_date.label }}</label>
+                            {{ form.subscription_start_date }}
+                            {% if form.subscription_start_date.help_text %}<div class="form-text">{{ form.subscription_start_date.help_text }}</div>{% endif %}
+                            {% if form.subscription_start_date.errors %}<div class="text-danger small mt-1">{{ form.subscription_start_date.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="package-name-input">{{ form.package_name.label }}</label>
+                            <div class="package-autocomplete">
+                                {{ form.package_name }}
+                                {{ form.package_id }}
+                                {{ form.create_new_package }}
+                                <div class="package-suggestions" id="package-suggestions"></div>
+                            </div>
+                            <div class="package-selected-info mt-1" id="package-selected-info"></div>
+                            {% if form.package_name.errors %}<div class="text-danger small mt-1">{{ form.package_name.errors }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="subscription-price-input">{{ form.subscription_price.label }}</label>
+                            <div class="input-group">
+                                {{ form.subscription_price }}
+                                <span class="input-group-text">{{ system_settings.currency_symbol }}</span>
+                            </div>
+                            <div class="form-text" id="package-default-price-hint"></div>
+                            {% if form.subscription_price.help_text %}<div class="form-text">{{ form.subscription_price.help_text }}</div>{% endif %}
+                            {% if form.subscription_price.errors %}<div class="text-danger small mt-1">{{ form.subscription_price.errors }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-12 mb-3 {% if form.create_new_package.value != '1' %}d-none{% endif %}" id="new-package-panel">
+                            <div class="border rounded p-3 bg-light">
+                                <h6 class="mb-3"><i class="bi bi-plus-circle"></i> باقة جديدة: <span id="new-package-title">{{ form.package_name.value|default:'' }}</span></h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label class="form-label" for="{{ form.new_package_speed.id_for_label }}">{{ form.new_package_speed.label }}</label>
+                                        {{ form.new_package_speed }}
+                                        {% if form.new_package_speed.errors %}<div class="text-danger small mt-1">{{ form.new_package_speed.errors }}</div>{% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="{{ form.new_package_price.id_for_label }}">{{ form.new_package_price.label }}</label>
+                                        <div class="input-group">
+                                            {{ form.new_package_price }}
+                                            <span class="input-group-text">{{ system_settings.currency_symbol }}</span>
+                                        </div>
+                                        {% if form.new_package_price.errors %}<div class="text-danger small mt-1">{{ form.new_package_price.errors }}</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="form-text">مدة الباقة الافتراضية: 30 يوماً</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                {{ form.auto_renew }}
+                                <label class="form-check-label" for="{{ form.auto_renew.id_for_label }}">{{ form.auto_renew.label }}</label>
+                                {% if form.auto_renew.help_text %}<div class="form-text">{{ form.auto_renew.help_text }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 pt-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> حفظ
+                        </button>
+                        <a href="{% url 'subscribers:list' %}" class="btn btn-secondary">إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const searchUrl = '{% url "subscribers:package_search" %}';
+    const currency = '{{ system_settings.currency_symbol|escapejs }}';
+    const nameInput = document.getElementById('package-name-input');
+    const idInput = document.getElementById('package-id-input');
+    const createNewInput = document.getElementById('create-new-package-input');
+    const suggestionsEl = document.getElementById('package-suggestions');
+    const selectedInfoEl = document.getElementById('package-selected-info');
+    const newPanel = document.getElementById('new-package-panel');
+    const newTitle = document.getElementById('new-package-title');
+    const priceInput = document.getElementById('subscription-price-input');
+    const defaultPriceHint = document.getElementById('package-default-price-hint');
+    const newPackagePriceInput = document.getElementById('id_new_package_price');
+    let debounceTimer = null;
+    let lastResults = [];
+    let pickingSuggestion = false;
+    let packageDefaultPrice = null;
+    let priceManuallyEdited = false;
+
+    function setSubscriptionPrice(value, fromPackage = false) {
+        if (!priceInput || value === null || value === undefined || value === '') return;
+        priceInput.value = value;
+        if (fromPackage) {
+            priceManuallyEdited = false;
+        }
+    }
+
+    function updateDefaultPriceHint() {
+        if (!defaultPriceHint) return;
+        if (packageDefaultPrice !== null && createNewInput.value !== '1') {
+            defaultPriceHint.textContent = `سعر الباقة الافتراضي: ${packageDefaultPrice} ${currency}`;
+        } else {
+            defaultPriceHint.textContent = '';
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function clearSelection() {
+        idInput.value = '';
+        createNewInput.value = '0';
+        selectedInfoEl.textContent = '';
+        newPanel.classList.add('d-none');
+        packageDefaultPrice = null;
+        updateDefaultPriceHint();
+    }
+
+    function selectExisting(item) {
+        nameInput.value = item.name;
+        nameInput.dataset.selectedName = item.name;
+        idInput.value = item.id;
+        createNewInput.value = '0';
+        packageDefaultPrice = item.price;
+        setSubscriptionPrice(item.price, true);
+        selectedInfoEl.textContent = item.speed;
+        updateDefaultPriceHint();
+        newPanel.classList.add('d-none');
+        suggestionsEl.classList.remove('show');
+    }
+
+    function selectNew(name) {
+        nameInput.value = name;
+        delete nameInput.dataset.selectedName;
+        idInput.value = '';
+        createNewInput.value = '1';
+        packageDefaultPrice = null;
+        updateDefaultPriceHint();
+        newTitle.textContent = name;
+        selectedInfoEl.textContent = 'باقة جديدة — أكمل السرعة والسعر';
+        newPanel.classList.remove('d-none');
+        suggestionsEl.classList.remove('show');
+        document.getElementById('id_new_package_speed')?.focus();
+    }
+
+    if (priceInput) {
+        priceInput.addEventListener('input', function () {
+            priceManuallyEdited = true;
+        });
+    }
+
+    if (newPackagePriceInput) {
+        newPackagePriceInput.addEventListener('input', function () {
+            if (!priceManuallyEdited || !priceInput.value.trim()) {
+                setSubscriptionPrice(newPackagePriceInput.value, true);
+            }
+        });
+    }
+
+    function renderSuggestions(results, query, exactMatch) {
+        lastResults = results;
+        let html = results.map((item, index) =>
+            `<div class="package-suggestion" data-index="${index}" data-type="existing">${escapeHtml(item.label)}</div>`
+        ).join('');
+
+        if (query && !exactMatch) {
+            html += `<div class="package-suggestion add-new" data-type="new"><i class="bi bi-plus-lg"></i> إضافة باقة جديدة: «${escapeHtml(query)}»</div>`;
+        }
+
+        if (!html) {
+            html = query
+                ? `<div class="package-suggestion add-new" data-type="new"><i class="bi bi-plus-lg"></i> إضافة باقة جديدة: «${escapeHtml(query)}»</div>`
+                : '<div class="package-suggestion text-muted">لا توجد باقات — اكتب اسم الباقة الجديدة</div>';
+        }
+
+        suggestionsEl.innerHTML = html;
+        suggestionsEl.classList.add('show');
+    }
+
+    function fetchSuggestions(query) {
+        fetch(`${searchUrl}?q=${encodeURIComponent(query)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        })
+            .then(r => r.json())
+            .then(data => renderSuggestions(data.results, data.query, data.exact_match))
+            .catch(() => suggestionsEl.classList.remove('show'));
+    }
+
+    nameInput.addEventListener('input', function () {
+        const query = nameInput.value.trim();
+        if (idInput.value && nameInput.dataset.selectedName && nameInput.dataset.selectedName !== query) {
+            clearSelection();
+        }
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => fetchSuggestions(query), 200);
+    });
+
+    nameInput.addEventListener('focus', function () {
+        fetchSuggestions(nameInput.value.trim());
+    });
+
+    suggestionsEl.addEventListener('mousedown', function (e) {
+        if (e.target.closest('.package-suggestion')) {
+            pickingSuggestion = true;
+        }
+    });
+
+    nameInput.addEventListener('blur', function () {
+        setTimeout(function () {
+            if (pickingSuggestion) {
+                pickingSuggestion = false;
+                return;
+            }
+            const query = nameInput.value.trim();
+            if (!query || idInput.value) return;
+            const exact = lastResults.some(r => r.name.toLowerCase() === query.toLowerCase());
+            if (!exact) {
+                selectNew(query);
+            }
+        }, 200);
+    });
+
+    suggestionsEl.addEventListener('click', function (e) {
+        const item = e.target.closest('.package-suggestion');
+        if (!item) return;
+        if (item.dataset.type === 'new') {
+            selectNew(nameInput.value.trim());
+            return;
+        }
+        const index = parseInt(item.dataset.index, 10);
+        if (!Number.isNaN(index) && lastResults[index]) {
+            selectExisting(lastResults[index]);
+        }
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.package-autocomplete')) {
+            suggestionsEl.classList.remove('show');
+        }
+    });
+
+    document.getElementById('subscriber-create-form').addEventListener('submit', function () {
+        const speedInput = document.getElementById('id_new_package_speed');
+        const priceInput = document.getElementById('id_new_package_price');
+        const hasNewDetails = speedInput?.value.trim() && priceInput?.value.trim();
+        if (!idInput.value && hasNewDetails) {
+            createNewInput.value = '1';
+            newPanel.classList.remove('d-none');
+        }
+    });
+
+    if (createNewInput.value === '1') {
+        newPanel.classList.remove('d-none');
+        if (nameInput.value.trim()) {
+            newTitle.textContent = nameInput.value.trim();
+        }
+    } else if (idInput.value && nameInput.value.trim()) {
+        fetch(`${searchUrl}?q=${encodeURIComponent(nameInput.value.trim())}`)
+            .then(r => r.json())
+            .then(data => {
+                const match = data.results.find(r => String(r.id) === String(idInput.value));
+                if (match) {
+                    packageDefaultPrice = match.price;
+                    if (!priceInput.value.trim()) {
+                        setSubscriptionPrice(match.price, true);
+                    }
+                    selectedInfoEl.textContent = match.speed;
+                    updateDefaultPriceHint();
+                }
+            });
+    }
+})();
+</script>
+{% endblock %}

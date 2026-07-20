@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}{{ device.name }}{% endblock %}
+{% block content %}
+<h4>{{ device.name }}</h4>
+<div class="row g-3 mb-3"><div class="col-md-6"><div class="card"><div class="card-body"><p><strong>النوع:</strong> {{ device.get_device_type_display }}</p><p><strong>IP:</strong> {{ device.ip_address|default:"-" }}</p><p><strong>MAC:</strong> {{ device.mac_address|default:"-" }}</p><p><strong>الموقع:</strong> {{ device.location|default:"-" }}</p><p><strong>الضمان:</strong> {{ device.warranty_date|default:"-" }}</p></div></div></div>
+<div class="col-md-6"><div class="card"><div class="card-header">إضافة ملاحظة صيانة</div><div class="card-body"><form method="post">{% csrf_token %}{% for field in note_form %}<div class="mb-3"><label>{{ field.label }}</label>{{ field }}</div>{% endfor %}<button class="btn btn-primary btn-sm">إضافة</button></form></div></div></div></div>
+<div class="card"><div class="card-header">ملاحظات الصيانة</div><ul class="list-group list-group-flush">{% for n in notes %}<li class="list-group-item"><strong>{{ n.date }}</strong>: {{ n.description }}</li>{% empty %}<li class="list-group-item text-muted">لا توجد ملاحظات</li>{% endfor %}</ul></div>
+{% endblock %}

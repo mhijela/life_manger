@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}تأكيد طلب الدفعة — Jawwal Pay{% endblock %}
+{% block breadcrumb %}<a href="{% url 'finance:index' %}">المالية</a> / Jawwal Pay / تأكيد{% endblock %}
+
+{% block content %}
+<div class="page-header mb-3">
+    <div>
+        <h4 class="page-heading">إتمام طلب الدفعة</h4>
+        <p class="page-desc">أدخل رمز التحقق لإرسال الطلب للزبون</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-warning">
+            <div class="card-header bg-warning-subtle">ملخص الطلب</div>
+            <div class="card-body">
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-4">الجوال</dt>
+                    <dd class="col-sm-8"><code>{{ summary.mobile }}</code></dd>
+                    <dt class="col-sm-4">المبلغ</dt>
+                    <dd class="col-sm-8"><strong>{{ summary.amount }} ₪</strong></dd>
+                    {% if summary.otp_reference %}
+                    <dt class="col-sm-4">مرجع OTP</dt>
+                    <dd class="col-sm-8"><code>{{ summary.otp_reference }}</code></dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">رمز التحقق</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.verification_code.label }}</label>
+                        {{ form.verification_code }}
+                        {% if form.verification_code.help_text %}
+                        <div class="form-text">{{ form.verification_code.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-shield-check"></i> إتمام طلب الدفعة
+                    </button>
+                    <a href="{% url 'finance:jawwal_payment' %}" class="btn btn-link">إلغاء</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

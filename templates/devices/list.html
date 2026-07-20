@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}الأجهزة{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h4>الأجهزة الشبكية</h4><a href="{% url 'devices:create' %}" class="btn btn-primary">إضافة جهاز</a></div>
+<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>الاسم</th><th>النوع</th><th>IP</th><th>الموقع</th><th>الحالة</th><th></th></tr></thead><tbody>{% for d in page_obj %}<tr><td><a href="{% url 'devices:detail' d.pk %}">{{ d.name }}</a></td><td>{{ d.get_device_type_display }}</td><td>{{ d.ip_address|default:"-" }}</td><td>{{ d.location|default:"-" }}</td><td>{{ d.get_status_display }}</td><td><a href="{% url 'devices:edit' d.pk %}" class="btn btn-sm btn-outline-primary">تعديل</a></td></tr>{% empty %}<tr><td colspan="6" class="text-center text-muted">لا توجد أجهزة</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

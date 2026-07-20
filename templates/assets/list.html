@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}الأصول{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h4>الأصول</h4><a href="{% url 'assets:create' %}" class="btn btn-primary">إضافة أصل</a></div>
+<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>الاسم</th><th>التسلسلي</th><th>الفئة</th><th>مُسلّم إلى</th><th>الحالة</th><th></th></tr></thead><tbody>{% for a in page_obj %}<tr><td><a href="{% url 'assets:detail' a.pk %}">{{ a.name }}</a></td><td>{{ a.serial_number|default:"-" }}</td><td>{{ a.category }}</td><td>{{ a.assigned_to|default:"-" }}</td><td>{{ a.get_status_display }}</td><td>{% if a.status == 'assigned' %}<form method="post" action="{% url 'assets:return' a.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-warning">إرجاع</button></form>{% endif %}</td></tr>{% empty %}<tr><td colspan="6" class="text-center text-muted">لا توجد أصول</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

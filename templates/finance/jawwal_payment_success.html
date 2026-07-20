@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}نتيجة طلب الدفعة — Jawwal Pay{% endblock %}
+{% block breadcrumb %}<a href="{% url 'finance:index' %}">المالية</a> / Jawwal Pay / النتيجة{% endblock %}
+
+{% block content %}
+<div class="page-header mb-3">
+    <div>
+        <h4 class="page-heading">نتيجة طلب الدفعة</h4>
+        <p class="page-desc">تفاصيل العملية من بوابة Jawwal Pay</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        {% if success %}
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i>
+            <strong>{{ details.status_label|default:"نجح" }}</strong>
+            {% if details.message %} — {{ details.message }}{% endif %}
+        </div>
+        {% else %}
+        <div class="alert alert-danger">
+            <i class="bi bi-x-circle"></i>
+            <strong>{{ details.status_label|default:"فشل" }}</strong>
+            {% if details.message %} — {{ details.message }}{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header">تفاصيل العملية</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    {% if details.mobile %}
+                    <dt class="col-sm-4">رقم الجوال</dt>
+                    <dd class="col-sm-8"><code>{{ details.mobile }}</code></dd>
+                    {% endif %}
+                    {% if details.amount %}
+                    <dt class="col-sm-4">المبلغ</dt>
+                    <dd class="col-sm-8"><strong>{{ details.amount }} ₪</strong></dd>
+                    {% endif %}
+                    {% if details.charges and details.charges != '0' and details.charges != '0.0' %}
+                    <dt class="col-sm-4">الرسوم</dt>
+                    <dd class="col-sm-8">{{ details.charges }} ₪</dd>
+                    {% endif %}
+                    {% if details.total_amount %}
+                    <dt class="col-sm-4">الإجمالي</dt>
+                    <dd class="col-sm-8"><strong>{{ details.total_amount }} ₪</strong></dd>
+                    {% endif %}
+                    {% if details.transaction_type %}
+                    <dt class="col-sm-4">نوع العملية</dt>
+                    <dd class="col-sm-8">{{ details.transaction_type }}</dd>
+                    {% endif %}
+                    {% if details.otp_reference %}
+                    <dt class="col-sm-4">مرجع OTP</dt>
+                    <dd class="col-sm-8"><code>{{ details.otp_reference }}</code></dd>
+                    {% endif %}
+                    {% if details.transaction_reference %}
+                    <dt class="col-sm-4">رقم العملية</dt>
+                    <dd class="col-sm-8"><code>{{ details.transaction_reference }}</code></dd>
+                    {% endif %}
+                </dl>
+
+                {% if details.extra_fields %}
+                <hr>
+                <dl class="row mb-0 small">
+                    {% for field in details.extra_fields %}
+                    <dt class="col-sm-4">{{ field.label }}</dt>
+                    <dd class="col-sm-8">{{ field.value }}</dd>
+                    {% endfor %}
+                </dl>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <a href="{% url 'finance:jawwal_payment' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> طلب دفعة جديد
+            </a>
+            <a href="{% url 'finance:index' %}" class="btn btn-outline-secondary">العودة للمالية</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

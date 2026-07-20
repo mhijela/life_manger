@@ -1,0 +1,20 @@
+{
+  "confirm_action": "/merchant/saveReceivePayment",
+  "confirm_data": {
+    "SYNCHRONIZER_TOKEN": "f9ecf686-cd70-43b1-aa42-3fd4463e0069",
+    "SYNCHRONIZER_URI": "/merchant/confirmReceivePayment/receivePaymentForm",
+    "otpReference": "2922352550847",
+    "transactionType": "الدفع لتاجر",
+    "customerMobileNumber": "00970595108208",
+    "amount": "1.0",
+    "charges": "0.0",
+    "totalAmount": "1.0",
+    "verificationCode": ""
+  },
+  "summary": {
+    "mobile": "00970595108208",
+    "amount": "1.0",
+    "total_amount": "1.0",
+    "otp_reference": "2922352550847"
+  }
+}

@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}{{ asset.name }}{% endblock %}
+{% block content %}
+<h4>{{ asset.name }}</h4>
+<div class="row g-3"><div class="col-md-6"><div class="card"><div class="card-body"><p><strong>التسلسلي:</strong> {{ asset.serial_number|default:"-" }}</p><p><strong>الحالة:</strong> {{ asset.get_status_display }}</p><p><strong>مُسلّم إلى:</strong> {{ asset.assigned_to|default:"-" }}</p></div></div></div>
+<div class="col-md-6"><div class="card"><div class="card-header">السجل</div><ul class="list-group list-group-flush">{% for h in history %}<li class="list-group-item">{{ h.get_action_display }} - {{ h.date|date:"Y-m-d H:i" }}</li>{% empty %}<li class="list-group-item text-muted">لا يوجد سجل</li>{% endfor %}</ul></div></div></div>
+{% endblock %}

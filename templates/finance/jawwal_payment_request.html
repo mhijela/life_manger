@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}طلب دفعة — Jawwal Pay{% endblock %}
+{% block breadcrumb %}<a href="{% url 'finance:index' %}">المالية</a> / Jawwal Pay{% endblock %}
+
+{% block content %}
+<div class="page-header mb-3">
+    <div>
+        <h4 class="page-heading">طلب دفعة عبر Jawwal Pay</h4>
+        <p class="page-desc">إرسال طلب دفع للزبون عبر SMS</p>
+    </div>
+</div>
+
+<div class="alert alert-success small">
+    <i class="bi bi-check-circle"></i> Jawwal Pay متصل — الجلسة نشطة
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">بيانات طلب الدفعة</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.mobile.label }}</label>
+                        {{ form.mobile }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.amount.label }}</label>
+                        {{ form.amount }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> إنشاء طلب الدفعة
+                    </button>
+                    <a href="{% url 'finance:index' %}" class="btn btn-link">إلغاء</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

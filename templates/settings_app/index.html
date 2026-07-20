@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% block title %}الإعدادات{% endblock %}
+
+{% block extra_css %}
+<style>
+.settings-tabs .nav-link { color: var(--primary); font-weight: 500; }
+.settings-tabs .nav-link.active { background: #fff; border-bottom-color: #fff; color: var(--primary-light); }
+.settings-tabs { border-bottom: 1px solid #dee2e6; }
+.settings-tab-content {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 0.75rem 0.75rem;
+}
+.settings-tab-content > .tab-pane { padding: 1.5rem; }
+.settings-tab-content > .tab-pane:not(.active) { display: none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h4 class="mb-3">إعدادات النظام</h4>
+
+<ul class="nav nav-tabs settings-tabs" id="settingsTabs" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link {% if active_tab == 'general' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-general" type="button">
+            <i class="bi bi-building"></i> عام
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link {% if active_tab == 'finance' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-finance" type="button">
+            <i class="bi bi-cash-coin"></i> المالية
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link {% if active_tab == 'subscriptions' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-subscriptions" type="button">
+            <i class="bi bi-calendar-check"></i> الاشتراكات
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link {% if active_tab == 'system' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-system" type="button">
+            <i class="bi bi-sliders"></i> النظام
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link {% if active_tab == 'sms' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-sms" type="button">
+            <i class="bi bi-chat-dots"></i> MTC SMS
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link {% if active_tab == 'jawwal' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-jawwal" type="button">
+            <i class="bi bi-phone"></i> Jawwal Pay
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link {% if active_tab == 'backup' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-backup" type="button">
+            <i class="bi bi-cloud-download"></i> النسخ الاحتياطي
+        </button>
+    </li>
+</ul>
+
+<form method="post" enctype="multipart/form-data" id="settingsForm">
+    {% csrf_token %}
+    <input type="hidden" name="action" id="formAction" value="settings">
+    <input type="hidden" name="active_tab" id="activeTabInput" value="{{ active_tab }}">
+
+    <div class="tab-content settings-tab-content">
+        <!-- عام -->
+        <div class="tab-pane fade {% if active_tab == 'general' %}show active{% endif %}" id="tab-general" role="tabpanel">
+            <h5 class="mb-3">الإعدادات العامة</h5>
+            <p class="text-muted small">اسم الشبكة والشعار الظاهر في الواجهة</p>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.company_name.label }}</label>
+                    {{ form.company_name }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.logo.label }}</label>
+                    {{ form.logo }}
+                    {% if sys_settings.logo %}
+                    <div class="mt-2"><img src="{{ sys_settings.logo.url }}" height="40" class="rounded" alt="logo"></div>
+                    {% endif %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-save" data-tab="general"><i class="bi bi-check-lg"></i> حفظ</button>
+        </div>
+
+        <!-- المالية -->
+        <div class="tab-pane fade {% if active_tab == 'finance' %}show active{% endif %}" id="tab-finance" role="tabpanel">
+            <h5 class="mb-3">الإعدادات المالية</h5>
+            <p class="text-muted small">العملة ورصيد الصندوق الافتتاحي</p>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">{{ form.currency.label }}</label>
+                    {{ form.currency }}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">{{ form.currency_symbol.label }}</label>
+                    {{ form.currency_symbol }}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">{{ form.cashbox_opening_balance.label }}</label>
+                    {{ form.cashbox_opening_balance }}
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">{{ form.debt_sms_template.label }}</label>
+                    {{ form.debt_sms_template }}
+                    <div class="form-text">
+                        قالب SMS لإرسال تذكير الدين من صفحة الديون.
+                        المتغيرات: <code>{name}</code> <code>{amount}</code> <code>{due_date}</code> <code>{company}</code>
+                        —
+                        <a href="{% url 'messages:templates' %}">إدارة القوالب</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card border mb-3">
+                <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h6 class="mb-1"><i class="bi bi-credit-card"></i> طرق الدفع</h6>
+                        <div class="text-muted small">إضافة وتعديل طرق الدفع المستخدمة في الدفعات وسداد الديون</div>
+                    </div>
+                    <a href="{% url 'settings_app:payment_methods' %}" class="btn btn-outline-primary">
+                        إدارة طرق الدفع
+                    </a>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-save" data-tab="finance"><i class="bi bi-check-lg"></i> حفظ</button>
+        </div>
+
+        <!-- الاشتراكات -->
+        <div class="tab-pane fade {% if active_tab == 'subscriptions' %}show active{% endif %}" id="tab-subscriptions" role="tabpanel">
+            <h5 class="mb-3">إعدادات الاشتراكات</h5>
+            <p class="text-muted small">تنبيهات الانتهاء والتعليق التلقائي — إضافة المشترك والاشتراك تتم من قسم المشتركون</p>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.subscription_alert_days.label }}</label>
+                    {{ form.subscription_alert_days }}
+                    <div class="form-text">عدد الأيام قبل انتهاء الاشتراك لإرسال تنبيه SMS</div>
+                </div>
+                <div class="col-md-6 mb-3 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        {{ form.auto_suspend_on_expiry }}
+                        <label class="form-check-label">{{ form.auto_suspend_on_expiry.label }}</label>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        {{ form.auto_renew_enabled }}
+                        <label class="form-check-label">{{ form.auto_renew_enabled.label }}</label>
+                        <div class="form-text">عند الإيقاف لن يتم تجديد أي اشتراك تلقائياً حتى إعادة التفعيل</div>
+                    </div>
+                </div>
+            </div>
+            <div class="border rounded p-3 mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <h6 class="mb-1"><i class="bi bi-box"></i> باقات الإنترنت</h6>
+                    <div class="text-muted small">إدارة الباقات المستخدمة عند إضافة مشترك جديد أو التجديد</div>
+                </div>
+                <a href="{% url 'subscriptions:packages' %}" class="btn btn-outline-primary btn-sm">
+                    إدارة الباقات
+                </a>
+            </div>
+            <button type="submit" class="btn btn-primary btn-save" data-tab="subscriptions"><i class="bi bi-check-lg"></i> حفظ</button>
+        </div>
+
+        <!-- النظام -->
+        <div class="tab-pane fade {% if active_tab == 'system' %}show active{% endif %}" id="tab-system" role="tabpanel">
+            <h5 class="mb-3">إعدادات النظام</h5>
+            <p class="text-muted small">التصفح والمنطقة الزمنية</p>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.pagination_size.label }}</label>
+                    {{ form.pagination_size }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.timezone.label }}</label>
+                    {{ form.timezone }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-save" data-tab="system"><i class="bi bi-check-lg"></i> حفظ</button>
+        </div>
+
+        <!-- SMS -->
+        <div class="tab-pane fade {% if active_tab == 'sms' %}show active{% endif %}" id="tab-sms" role="tabpanel">
+            <h5 class="mb-3">إعدادات MTC SMS</h5>
+            <p class="text-muted small">مزود الرسائل MTC — يدعم العربية والإنجليزية (type=0)</p>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.sms_username.label }}</label>
+                    {{ form.sms_username }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.sms_api_key.label }}</label>
+                    {{ form.sms_api_key }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.sms_sender_id.label }}</label>
+                    {{ form.sms_sender_id }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.sms_api_url.label }}</label>
+                    {{ form.sms_api_url }}
+                    <div class="form-text">اتركه فارغاً للرابط الافتراضي</div>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary btn-save" data-tab="sms"><i class="bi bi-check-lg"></i> حفظ</button>
+                <button type="submit" class="btn btn-outline-primary btn-sm btn-action" data-action="check_sms_balance" data-tab="sms">
+                    <i class="bi bi-arrow-clockwise"></i> تحديث الرصيد
+                </button>
+                <button type="submit" class="btn btn-outline-secondary btn-sm btn-action" data-action="get_sms_senders" data-tab="sms">
+                    <i class="bi bi-list-ul"></i> عرض المرسلين
+                </button>
+            </div>
+
+            {% if sms_configured %}
+            <hr class="my-4">
+            <h6>حالة الحساب</h6>
+            <div class="mt-2">
+                {% if sms_balance.success %}
+                <span class="badge bg-success fs-6"><i class="bi bi-wallet2"></i> الرصيد: {{ sms_balance.balance }}</span>
+                {% elif sms_balance %}
+                <span class="badge bg-danger">{{ sms_balance.error }}</span>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="alert alert-warning mt-3 mb-0 small">أكمل إعدادات SMS ثم احفظ لتفعيل فحص الرصيد</div>
+            {% endif %}
+
+            <hr class="my-4">
+            <h6>أكواد الأخطاء</h6>
+            <div class="row small text-muted mt-2 g-2">
+                <div class="col-md-4"><code>0</code> — تم الإرسال بنجاح</div>
+                <div class="col-md-4"><code>10002</code> — بيانات دخول خاطئة</div>
+                <div class="col-md-4"><code>10003</code> — حقل فارغ</div>
+                <div class="col-md-4"><code>10004</code> — مرسل غير مسموح</div>
+                <div class="col-md-4"><code>10005</code> — رصيد غير كافٍ</div>
+                <div class="col-md-4"><code>10008</code> — حساب موقوف</div>
+            </div>
+        </div>
+
+        <!-- Jawwal Pay -->
+        <div class="tab-pane fade {% if active_tab == 'jawwal' %}show active{% endif %}" id="tab-jawwal" role="tabpanel">
+            <h5 class="mb-3">Jawwal Pay Business</h5>
+            <p class="text-muted small">ربط حساب Jawwal Pay — تسجيل الدخول + OTP (مرة واحدة). طلبات الدفعة من قسم المالية.</p>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.jawwal_username.label }}</label>
+                    {{ form.jawwal_username }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.jawwal_password.label }}</label>
+                    {{ form.jawwal_password }}
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">{{ form.jawwal_base_url.label }}</label>
+                    {{ form.jawwal_base_url }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.jawwal_request_payment_url.label }}</label>
+                    {{ form.jawwal_request_payment_url }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.jawwal_transfer_url.label }}</label>
+                    {{ form.jawwal_transfer_url }}
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">{{ form.jawwal_field_map.label }}</label>
+                    {{ form.jawwal_field_map }}
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary btn-save" data-tab="jawwal"><i class="bi bi-check-lg"></i> حفظ</button>
+                <button type="submit" class="btn btn-outline-primary btn-sm btn-action" data-action="jawwal_login_test" data-tab="jawwal">
+                    <i class="bi bi-box-arrow-in-right"></i> اختبار تسجيل الدخول
+                </button>
+            </div>
+
+            <hr class="my-4">
+            <h6>ما تم اكتشافه من البوابة (بدون تعديل الحساب)</h6>
+            <ul class="small text-muted mb-3">
+                <li><code>POST /login/authenticate</code> — تسجيل الدخول (username, password, lang, fingerprint)</li>
+                <li><code>GET /merchant/requestPaymentServices</code> — صفحة طلب الدفعة (302 → login إذا غير مسجّل)</li>
+                <li><code>GET /login/identify</code> — استرجاع كلمة المرور</li>
+            </ul>
+
+            <div class="alert alert-info small mb-0">
+                <strong>ربط الحساب:</strong>
+                <a href="{% url 'settings_app:jawwal_wizard' %}" class="alert-link">تسجيل الدخول + OTP</a>
+                — بعد الربط استخدم <a href="{% url 'finance:jawwal_payment' %}" class="alert-link">طلب دفعة من المالية</a>
+            </div>
+        </div>
+
+        <!-- النسخ الاحتياطي -->
+        <div class="tab-pane fade {% if active_tab == 'backup' %}show active{% endif %}" id="tab-backup" role="tabpanel">
+            <h5 class="mb-3">النسخ الاحتياطي والاستعادة</h5>
+            <p class="text-muted small">حفظ واسترجاع قاعدة البيانات</p>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card border h-100">
+                        <div class="card-body">
+                            <h6><i class="bi bi-download text-success"></i> إنشاء نسخة احتياطية</h6>
+                            <p class="text-muted small">تحميل نسخة كاملة من قاعدة البيانات</p>
+                            <button type="submit" class="btn btn-success btn-action" data-action="backup" data-tab="backup">
+                                <i class="bi bi-cloud-download"></i> تحميل النسخة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border h-100">
+                        <div class="card-body">
+                            <h6><i class="bi bi-upload text-warning"></i> استعادة نسخة</h6>
+                            <p class="text-muted small">استبدال البيانات الحالية بنسخة سابقة</p>
+                            <input type="file" name="backup_file" id="backupFile" class="form-control mb-2" accept=".sql,.gz">
+                            <button type="submit" class="btn btn-warning btn-action" data-action="restore" data-tab="backup"
+                                onclick="return confirm('تحذير: سيتم استبدال جميع البيانات الحالية!')">
+                                <i class="bi bi-cloud-upload"></i> استعادة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if backups %}
+            <hr>
+            <h6>النسخ المحفوظة على السيرفر</h6>
+            <ul class="list-group list-group-flush">
+                {% for b in backups %}
+                <li class="list-group-item px-0"><i class="bi bi-file-earmark-zip"></i> {{ b }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('#settingsTabs button[data-bs-toggle="tab"]').forEach(btn => {
+    btn.addEventListener('shown.bs.tab', e => {
+        const tab = e.target.getAttribute('data-bs-target').replace('#tab-', '');
+        document.getElementById('activeTabInput').value = tab;
+        history.replaceState(null, '', '?tab=' + tab);
+    });
+});
+
+document.querySelectorAll('.btn-save, .btn-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+        if (btn.dataset.tab) {
+            document.getElementById('activeTabInput').value = btn.dataset.tab;
+        }
+        if (btn.dataset.action) {
+            document.getElementById('formAction').value = btn.dataset.action;
+        } else {
+            document.getElementById('formAction').value = 'settings';
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}المصروفات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h4>المصروفات</h4><a href="{% url 'finance:expense_create' %}" class="btn btn-primary">إضافة</a></div>
+<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>العنوان</th><th>المبلغ</th><th>التاريخ</th><th>الفئة</th></tr></thead><tbody>{% for e in page_obj %}<tr><td>{{ e.title }}</td><td>{{ e.amount }}</td><td>{{ e.date }}</td><td>{{ e.category }}</td></tr>{% empty %}<tr><td colspan="4" class="text-center text-muted">لا توجد مصروفات</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

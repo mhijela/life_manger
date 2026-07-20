@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Jawwal Pay — الربط{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Jawwal Pay — ربط الحساب</h4>
+    <a href="{% url 'settings_app:index' %}?tab=jawwal" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-right"></i> الإعدادات
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge {% if step == 'login' %}bg-primary{% elif is_authenticated or otp_pending %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                1. تسجيل الدخول
+            </span>
+            <span class="badge {% if step == 'otp' %}bg-primary{% elif is_authenticated %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                2. OTP
+            </span>
+            <span class="badge {% if step == 'done' %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                3. جاهز
+            </span>
+        </div>
+    </div>
+</div>
+
+{% if step == 'done' %}
+<div class="alert alert-success">
+    <i class="bi bi-check-circle"></i> Jawwal Pay متصل — الجلسة محفوظة
+    <div class="mt-2">
+        <a href="{{ finance_jawwal_url }}" class="btn btn-success btn-sm">
+            <i class="bi bi-phone"></i> طلب دفعة من المالية
+        </a>
+    </div>
+</div>
+{% elif otp_pending %}
+<div class="alert alert-warning">
+    <i class="bi bi-shield-lock"></i> OTP مطلوب — أدخل الرمز المرسل لجوالك
+</div>
+{% endif %}
+
+<div class="row g-3">
+    {% if step == 'login' %}
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><strong>الخطوة 1:</strong> اسم المستخدم وكلمة المرور</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="wizard_action" value="login">
+                    <div class="mb-3">
+                        <label class="form-label">{{ login_form.username.label }}</label>
+                        {{ login_form.username }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ login_form.password.label }}</label>
+                        {{ login_form.password }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-in-right"></i> تسجيل الدخول
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if step == 'otp' %}
+    <div class="col-lg-6">
+        <div class="card border-warning">
+            <div class="card-header bg-warning-subtle"><strong>الخطوة 2:</strong> إدخال OTP</div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">OTP مطلوب مرة واحدة فقط — بعدها تُستخدم الجلسة المحفوظة تلقائياً.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="wizard_action" value="otp">
+                    <div class="mb-3">
+                        <label class="form-label">{{ otp_form.otp.label }}</label>
+                        {{ otp_form.otp }}
+                    </div>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-shield-check"></i> تأكيد OTP وحفظ الجلسة
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if step == 'done' %}
+    <div class="col-lg-6">
+        <div class="card border-success">
+            <div class="card-header bg-success-subtle">الربط مكتمل</div>
+            <div class="card-body">
+                <p class="mb-3">يمكنك الآن طلب دفعات من قسم <strong>المالية</strong>:</p>
+                <ol class="small text-muted">
+                    <li>أدخل رقم جوال الزبون والمبلغ</li>
+                    <li>أدخل رمز التحقق لإتمام العملية</li>
+                </ol>
+                <a href="{{ finance_jawwal_url }}" class="btn btn-success">
+                    <i class="bi bi-phone"></i> الذهاب لطلب دفعة
+                </a>
+                <form method="post" class="d-inline ms-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="wizard_action" value="relink">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm"
+                            onclick="return confirm('سيتم مسح الجلسة وإرسال OTP جديد. متابعة؟')">
+                        إعادة الربط
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>حالة الجلسة</strong>
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="wizard_action" value="logout">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">مسح الجلسة</button>
+                </form>
+            </div>
+            <div class="card-body">
+                <pre class="small bg-light p-2 rounded mb-0" style="max-height:180px;overflow:auto;">{{ session_json }}</pre>
+            </div>
+        </div>
+
+        {% if api_debug %}
+        <div class="card mt-3">
+            <div class="card-header"><strong>آخر نتيجة</strong></div>
+            <div class="card-body">
+                <pre class="small bg-dark text-light p-2 rounded mb-0" style="max-height:300px;overflow:auto;">{{ api_debug }}</pre>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
