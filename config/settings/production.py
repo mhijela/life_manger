@@ -2,7 +2,7 @@ from .base import *
 from decouple import config
 import dj_database_url
 
-DEBUG = False
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = [
     h.strip() for h in config('ALLOWED_HOSTS', default='localhost').split(',') if h.strip()
@@ -23,9 +23,10 @@ else:
         if h not in ('*', 'localhost', '127.0.0.1') and not h.startswith('.')
     ]
 
+_database_url = config('DATABASE_URL')
 DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL'),
+    'default': dj_database_url.parse(
+        _database_url,
         conn_max_age=600,
         ssl_require=config('DB_SSL', default=False, cast=bool),
     )

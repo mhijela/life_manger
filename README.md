@@ -62,55 +62,48 @@ docker-compose exec web python manage.py load_demo_data
 
 ## النشر على Coolify
 
-المشروع جاهز لـ **Docker Compose** على Coolify.
+جاهز لـ: **ربط الريبو + متغيرات البيئة + Deploy**.
 
-### 1) في Coolify
-1. New Resource → **Docker Compose**
-2. اربط مستودع Git (أو ارفع الملفات)
-3. تأكد أن ملف التركيب هو `docker-compose.yml`
-4. عيّن المتغيرات التالية في Environment:
+### الخطوة 1 — قاعدة البيانات و Redis في Coolify
+1. **New Resource → PostgreSQL** → أنشئ قاعدة → انسخ **Internal URL**  
+   هذا هو `DATABASE_URL`، مثال:
+   ```
+   postgres://postgres:PASSWORD@xxxxxxxx:5432/postgres
+   ```
+2. **New Resource → Redis** → أنشئ → انسخ **Internal URL**  
+   هذا هو `CELERY_BROKER_URL`، مثال:
+   ```
+   redis://xxxxxxxx:6379/0
+   ```
 
-| المتغير | مثال |
-|---------|------|
+### الخطوة 2 — نشر التطبيق
+1. **New Resource → Docker Compose**
+2. اربط المستودع: `https://github.com/mhijela/life_manger`
+3. ملف التركيب: `docker-compose.yml`
+4. في **Environment** ضع (انظر أيضاً `.env.example`):
+
+| المتغير | القيمة |
+|---------|--------|
 | `SECRET_KEY` | مفتاح عشوائي طويل |
-| `POSTGRES_PASSWORD` | كلمة مرور قوية لقاعدة البيانات |
-| `ALLOWED_HOSTS` | `your-domain.com,www.your-domain.com` |
-| `CSRF_TRUSTED_ORIGINS` | `https://your-domain.com,https://www.your-domain.com` |
 | `DEBUG` | `False` |
-| `POSTGRES_DB` | `inms` (اختياري) |
-| `POSTGRES_USER` | `inms` (اختياري) |
+| `ALLOWED_HOSTS` | `your-domain.com` |
+| `CSRF_TRUSTED_ORIGINS` | `https://your-domain.com` |
+| `DATABASE_URL` | رابط PostgreSQL من Coolify |
+| `CELERY_BROKER_URL` | رابط Redis من Coolify |
+| `DB_SSL` | `False` (أو `True` إذا طلب Coolify) |
 
-5. فعّل **HTTPS** / Let's Encrypt على النطاق
-6. Deploy
+5. فعّل HTTPS للنطاق → **Deploy**
 
-### 2) بعد أول نشر — إنشاء مدير النظام
-من Terminal داخل حاوية `web`:
-
+### الخطوة 3 — مستخدم المدير
+من Terminal لحاوية `web`:
 ```bash
 python manage.py createsuperuser
 ```
 
-أو:
-
-```bash
-python manage.py shell -c "from apps.accounts.models import User; User.objects.create_superuser(email='admin@inms.local', password='admin123', first_name='Admin')"
-```
-
-(عدّل الإيميل وكلمة المرور قبل الإنتاج)
-
-### 3) ملاحظات
-- Volume `media_data` يحفظ الشعارات والنسخ الاحتياطية
-- الخدمات: `web` + `db` + `redis` + `celery` + `celery-beat`
-- الترحيلات و`collectstatic` تعمل تلقائياً عند إقلاع `web`
-- لا تستخدم SQLite على Coolify — PostgreSQL مضمّن في الـ compose
-
-### 4) إن أردت PostgreSQL/Redis من Coolify بدل الحاويات
-احذف خدمات `db`/`redis` من الـ compose (أو عطّلها) وضَع:
-
-```
-DATABASE_URL=postgres://user:pass@host:5432/dbname
-CELERY_BROKER_URL=redis://host:6379/0
-```
+### ملاحظات
+- الترحيلات و`collectstatic` تتم تلقائياً عند إقلاع `web`
+- Volume `media_data` يحفظ الملفات المرفوعة
+- الخدمات في الـ compose: `web` + `celery` + `celery-beat` فقط (قاعدة البيانات و Redis من Coolify)
 
 ## هيكل التطبيقات
 
