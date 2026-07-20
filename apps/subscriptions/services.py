@@ -166,7 +166,7 @@ def process_auto_renewals(user=None, send_debt_sms=True):
     if not SystemSettings.load().auto_renew_enabled:
         return results
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     queryset = Subscription.objects.filter(
         auto_renew=True,
         end_date__lt=today,
@@ -207,7 +207,7 @@ def expire_overdue_subscriptions():
     """Expire active subscriptions past end_date without auto-renewal."""
     from apps.settings_app.models import SystemSettings
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     queryset = Subscription.objects.filter(status='active', end_date__lt=today)
 
     settings = SystemSettings.load()
@@ -227,7 +227,7 @@ def expire_overdue_subscriptions():
 
 def create_subscription(subscriber, package, user=None, notes=''):
     """Create new subscription for subscriber."""
-    today = timezone.now().date()
+    today = timezone.localdate()
     end_date = package.calculate_end_date(today)
 
     # Expire any existing active subscription

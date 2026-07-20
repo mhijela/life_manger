@@ -68,7 +68,7 @@ class Subscriber(models.Model):
             self.status = 'debtor'
         else:
             sub = self.active_subscription
-            if sub and sub.end_date >= timezone.now().date():
+            if sub and sub.end_date >= timezone.localdate():
                 self.status = 'active'
             else:
                 self.status = 'expired'

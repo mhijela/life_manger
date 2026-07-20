@@ -1,7 +1,7 @@
 from decimal import Decimal
 from datetime import timedelta
 from django.db import models
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, OuterRef, Subquery
 from django.utils import timezone
 from apps.subscribers.models import Subscriber
 from apps.subscriptions.models import Subscription
@@ -11,7 +11,8 @@ from apps.devices.models import Device
 
 
 def get_dashboard_stats():
-    today = timezone.now().date()
+    # يجب استخدام التاريخ المحلي — now().date() بتوقيت UTC يؤخر انتهاء الاشتراكات ليلاً
+    today = timezone.localdate()
 
     subscribers = Subscriber.objects.aggregate(
         total=Count('id'),
@@ -19,24 +20,27 @@ def get_dashboard_stats():
         suspended=Count('id', filter=Q(status='suspended')),
     )
 
-    # يعتمد على الاشتراك الفعلي (وليس حقل status الذي يصبح "مدين" رغم سريان الاشتراك)
-    active_subscription_qs = Subscription.objects.filter(
-        status='active',
-        end_date__gte=today,
+    latest = Subscription.objects.filter(subscriber=OuterRef('pk')).order_by('-end_date')
+    with_latest = Subscriber.objects.annotate(
+        latest_status=Subquery(latest.values('status')[:1]),
+        latest_end=Subquery(latest.values('end_date')[:1]),
+        latest_auto_renew=Subquery(latest.values('auto_renew')[:1]),
     )
-    active_subscribers = (
-        active_subscription_qs.values('subscriber_id').distinct().count()
-    )
-    auto_renew_subscriptions = active_subscription_qs.filter(auto_renew=True).count()
-    expired_subscribers = (
-        Subscription.objects.filter(
-            Q(status='expired')
-            | Q(status='active', end_date__lt=today)
-        )
-        .values('subscriber_id')
-        .distinct()
-        .count()
-    )
+
+    # نفس منطق فلتر قائمة المشتركين
+    active_subscribers = with_latest.filter(
+        latest_status='active',
+        latest_end__gte=today,
+    ).count()
+    expired_subscribers = with_latest.filter(
+        Q(latest_status='expired')
+        | Q(latest_status='active', latest_end__lt=today)
+    ).count()
+    auto_renew_subscriptions = with_latest.filter(
+        latest_status='active',
+        latest_end__gte=today,
+        latest_auto_renew=True,
+    ).count()
 
     total_debts = Debt.objects.exclude(status='paid').aggregate(
         total=Sum('total_amount'),

@@ -67,10 +67,10 @@ class Subscription(models.Model):
         return f'{self.subscriber} - {self.package.name}'
 
     def is_expired(self):
-        return self.end_date < timezone.now().date()
+        return self.end_date < timezone.localdate()
 
     def days_remaining(self):
-        delta = self.end_date - timezone.now().date()
+        delta = self.end_date - timezone.localdate()
         return max(delta.days, 0)
 
 

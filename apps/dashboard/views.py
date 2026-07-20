@@ -19,10 +19,11 @@ def index(request):
     except Exception:
         pass
 
+    today = timezone.localdate()
     expiring_soon = Subscription.objects.filter(
         status='active',
-        end_date__lte=timezone.now().date() + timedelta(days=alert_days),
-        end_date__gte=timezone.now().date(),
+        end_date__lte=today + timedelta(days=alert_days),
+        end_date__gte=today,
     ).select_related('subscriber', 'package')[:10]
 
     low_stock_items = InventoryItem.objects.filter(
