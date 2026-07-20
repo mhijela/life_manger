@@ -555,6 +555,24 @@ a:hover { color: var(--primary-dark); }
 }
 
 /* ── Stat Cards ── */
+.stat-card-link {
+    display: block;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+}
+
+.stat-card-link:hover,
+.stat-card-link:focus {
+    color: inherit;
+    text-decoration: none;
+}
+
+.stat-card-link:focus-visible .stat-card {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
 .stat-card {
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -618,11 +636,19 @@ a:hover { color: var(--primary-dark); }
 }
 
 .stat-card .stat-sublabel {
+    display: inline-block;
     color: var(--success);
     font-size: 0.72rem;
     font-weight: 600;
     margin-top: 0.2rem;
     white-space: nowrap;
+    text-decoration: none;
+    z-index: 2;
+}
+
+a.stat-sublabel:hover {
+    text-decoration: underline;
+    color: var(--success);
 }
 
 .stat-card .stat-trend {
