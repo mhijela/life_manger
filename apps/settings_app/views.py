@@ -300,6 +300,112 @@ def _filter_sql_excluding_user_tables(src_path, dst_path):
     return dst_path
 
 
+SQLITE_IMPORT_EXCLUDE = [
+    'accounts.User',
+    'accounts.UserProfile',
+    'admin.LogEntry',
+    'sessions.Session',
+    'contenttypes',
+    'auth.Permission',
+    'auth.Group',
+]
+
+
+def _register_backup_sqlite_db(sqlite_path):
+    """Attach an uploaded SQLite file as a temporary Django DB alias."""
+    from django.db import connections
+
+    alias = 'backup_src'
+    connections.databases[alias] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': sqlite_path,
+        'ATOMIC_REQUESTS': False,
+        'AUTOCOMMIT': True,
+        'CONN_MAX_AGE': 0,
+        'CONN_HEALTH_CHECKS': False,
+        'OPTIONS': {},
+        'TIME_ZONE': None,
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': '',
+        'TEST': {
+            'CHARSET': None,
+            'COLLATION': None,
+            'NAME': None,
+            'MIRROR': None,
+        },
+    }
+    if alias in connections:
+        try:
+            connections[alias].close()
+        except Exception:
+            pass
+        del connections[alias]
+    return alias
+
+
+def _unregister_backup_sqlite_db(alias='backup_src'):
+    from django.db import connections
+
+    if alias in connections:
+        try:
+            connections[alias].close()
+        except Exception:
+            pass
+        del connections[alias]
+    connections.databases.pop(alias, None)
+
+
+def _rewrite_user_fks_in_fixture(raw_json, fallback_user_id=None):
+    """Point nullable user FKs at the current Coolify user (or null)."""
+    import json
+
+    objects = json.loads(raw_json or '[]')
+    for obj in objects:
+        fields = obj.get('fields') or {}
+        if 'created_by' in fields:
+            fields['created_by'] = fallback_user_id
+        if obj.get('model') == 'accounts.userprofile':
+            continue
+    return json.dumps(objects)
+
+
+def _import_sqlite_into_postgres(sqlite_path, fallback_user_id=None):
+    """
+    Migrate business data from a local SQLite backup into the current PostgreSQL DB.
+    Users are intentionally excluded (caller restores the pre-import snapshot).
+    """
+    from io import StringIO
+    from django.core.management import call_command
+
+    alias = _register_backup_sqlite_db(sqlite_path)
+    fixture_path = sqlite_path + '.fixture.json'
+    try:
+        buf = StringIO()
+        call_command(
+            'dumpdata',
+            database=alias,
+            exclude=SQLITE_IMPORT_EXCLUDE,
+            natural_foreign=True,
+            stdout=buf,
+            verbosity=0,
+        )
+        fixture_json = _rewrite_user_fks_in_fixture(buf.getvalue(), fallback_user_id)
+        with open(fixture_path, 'w', encoding='utf-8') as fh:
+            fh.write(fixture_json)
+
+        call_command('flush', interactive=False, database='default', verbosity=0)
+        if fixture_json.strip() not in ('', '[]'):
+            call_command('loaddata', fixture_path, database='default', verbosity=0)
+    finally:
+        _unregister_backup_sqlite_db(alias)
+        try:
+            os.remove(fixture_path)
+        except OSError:
+            pass
+
+
 def _create_backup(request):
     backup_dir = settings.BACKUP_DIR
     os.makedirs(backup_dir, exist_ok=True)
@@ -382,11 +488,25 @@ def _restore_backup(request):
         messages.success(request, 'تم استعادة النسخة الاحتياطية (مع الإبقاء على المستخدمين الحاليين).')
     else:
         if _is_sqlite_file(filepath):
-            messages.error(
-                request,
-                'هذا ملف SQLite من البيئة المحلية — لا يمكن استعادته على Coolify (PostgreSQL). '
-                'أنشئ النسخة من إعدادات النسخ الاحتياطي على السيرفر نفسه ثم ارفعها.',
-            )
+            try:
+                _import_sqlite_into_postgres(filepath, fallback_user_id=request.user.pk)
+                _restore_local_users(users_snapshot)
+                messages.success(
+                    request,
+                    'تم استيراد بيانات SQLite إلى PostgreSQL (مع الإبقاء على المستخدمين الحاليين).',
+                )
+            except Exception as exc:
+                try:
+                    _restore_local_users(users_snapshot)
+                except Exception:
+                    pass
+                detail = str(exc).strip()
+                if len(detail) > 300:
+                    detail = detail[:300] + '…'
+                messages.error(
+                    request,
+                    f'فشل استيراد ملف SQLite{" — " + detail if detail else "."}',
+                )
             return _redirect_with_tab(request, 'backup')
 
         filtered_path = os.path.join(backup_dir, f'_restore_no_users_{os.path.basename(filepath)}')
