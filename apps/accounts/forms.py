@@ -75,6 +75,8 @@ class InitialSetupForm(forms.Form):
 
 
 class AccountProfileForm(forms.Form):
+    use_required_attribute = False
+
     first_name = forms.CharField(
         label='الاسم الأول',
         max_length=150,
@@ -126,6 +128,9 @@ class AccountProfileForm(forms.Form):
 
 
 class AccountPasswordForm(forms.Form):
+    # يمنع required في HTML من تعطيل إرسال تبويبات أخرى (نسخ احتياطي…)
+    use_required_attribute = False
+
     current_password = forms.CharField(
         label='كلمة المرور الحالية',
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'current-password'}),

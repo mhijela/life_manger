@@ -63,7 +63,8 @@
     </li>
 </ul>
 
-<form method="post" enctype="multipart/form-data" id="settingsForm">
+{# novalidate: تبويبات متعددة في نفس النموذج؛ required في تبويب الحساب يمنع النسخ الاحتياطي وغيره #}
+<form method="post" enctype="multipart/form-data" id="settingsForm" novalidate>
     {% csrf_token %}
     <input type="hidden" name="action" id="formAction" value="settings">
     <input type="hidden" name="active_tab" id="activeTabInput" value="{{ active_tab }}">
@@ -359,7 +360,7 @@
                         <div class="card-body">
                             <h6><i class="bi bi-download text-success"></i> إنشاء نسخة احتياطية</h6>
                             <p class="text-muted small">تحميل نسخة كاملة من قاعدة البيانات</p>
-                            <button type="submit" class="btn btn-success btn-action" data-action="backup" data-tab="backup">
+                            <button type="submit" class="btn btn-success btn-action" data-action="backup" data-tab="backup" formnovalidate>
                                 <i class="bi bi-cloud-download"></i> تحميل النسخة
                             </button>
                         </div>
@@ -370,8 +371,9 @@
                         <div class="card-body">
                             <h6><i class="bi bi-upload text-warning"></i> استعادة نسخة</h6>
                             <p class="text-muted small">استبدال البيانات الحالية بنسخة سابقة</p>
-                            <input type="file" name="backup_file" id="backupFile" class="form-control mb-2" accept=".sql,.gz">
-                            <button type="submit" class="btn btn-warning btn-action" data-action="restore" data-tab="backup"
+                            <input type="file" name="backup_file" id="backupFile" class="form-control mb-2" accept=".sql,.sql.gz,.sqlite3,.gz">
+                            <p class="text-muted small mb-2">يُستثنى المستخدمون الحاليون عند الاستعادة (بيانات الدخول تبقى كما هي). على Coolify ارفع نسخة PostgreSQL من السيرفر نفسه — ليس SQLite من اللوكل.</p>
+                            <button type="submit" class="btn btn-warning btn-action" data-action="restore" data-tab="backup" formnovalidate
                                 onclick="return confirm('تحذير: سيتم استبدال جميع البيانات الحالية!')">
                                 <i class="bi bi-cloud-upload"></i> استعادة
                             </button>

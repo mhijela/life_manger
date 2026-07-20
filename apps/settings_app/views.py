@@ -108,7 +108,10 @@ def index(request):
     backup_dir = settings.BACKUP_DIR
     if os.path.exists(backup_dir):
         backups = sorted(
-            [f for f in os.listdir(backup_dir) if f.endswith(('.sql', '.sql.gz'))],
+            [
+                f for f in os.listdir(backup_dir)
+                if f.endswith(('.sql', '.sql.gz', '.sqlite3'))
+            ],
             reverse=True,
         )
 
@@ -180,18 +183,137 @@ def payment_method_delete(request, pk):
     return redirect('settings_app:payment_methods')
 
 
+USER_TABLES = (
+    'accounts_user',
+    'accounts_userprofile',
+    'accounts_user_groups',
+    'accounts_user_user_permissions',
+)
+
+
+def _is_sqlite_file(path):
+    try:
+        with open(path, 'rb') as fh:
+            return fh.read(16).startswith(b'SQLite format 3')
+    except OSError:
+        return False
+
+
+def _decompress_backup_if_needed(filepath):
+    """If upload is .gz, decompress to a sibling .sql and return that path."""
+    if not filepath.endswith('.gz'):
+        return filepath
+    import gzip
+    import shutil
+    out_path = filepath[:-3] if filepath.endswith('.sql.gz') else (filepath[:-3] + '.sql')
+    with gzip.open(filepath, 'rb') as src, open(out_path, 'wb') as dst:
+        shutil.copyfileobj(src, dst)
+    return out_path
+
+
+def _snapshot_local_users():
+    """Serialize current users so restore can keep Coolify/local login intact."""
+    from django.core import serializers
+    from apps.accounts.models import User, UserProfile
+
+    users = list(User.objects.all().order_by('pk'))
+    profiles = list(UserProfile.objects.all().order_by('pk'))
+    return {
+        'users': serializers.serialize('json', users),
+        'profiles': serializers.serialize('json', profiles),
+        'groups': {
+            str(u.pk): list(u.groups.values_list('pk', flat=True)) for u in users
+        },
+        'permissions': {
+            str(u.pk): list(u.user_permissions.values_list('pk', flat=True)) for u in users
+        },
+    }
+
+
+def _restore_local_users(snapshot):
+    from django.core import serializers
+    from django.contrib.auth.models import Group, Permission
+    from apps.accounts.models import User
+
+    if not snapshot:
+        return
+
+    for obj in serializers.deserialize('json', snapshot['users']):
+        obj.save()
+
+    for obj in serializers.deserialize('json', snapshot['profiles']):
+        obj.save()
+
+    users_by_id = {str(u.pk): u for u in User.objects.all()}
+    for pk, group_ids in snapshot.get('groups', {}).items():
+        user = users_by_id.get(str(pk))
+        if user:
+            user.groups.set(Group.objects.filter(pk__in=group_ids))
+    for pk, perm_ids in snapshot.get('permissions', {}).items():
+        user = users_by_id.get(str(pk))
+        if user:
+            user.user_permissions.set(Permission.objects.filter(pk__in=perm_ids))
+
+
+def _filter_sql_excluding_user_tables(src_path, dst_path):
+    """Strip DROP/CREATE/COPY/INSERT for auth user tables from a pg_dump SQL file."""
+    import re
+
+    table_alt = '|'.join(re.escape(t) for t in USER_TABLES)
+    copy_re = re.compile(
+        rf'^COPY\s+(?:public\.)?(?:{table_alt})\b',
+        re.IGNORECASE,
+    )
+    stmt_start_re = re.compile(
+        rf'^(?:DROP\s+TABLE|CREATE\s+TABLE|ALTER\s+TABLE|INSERT\s+INTO|TRUNCATE)\s+'
+        rf'(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?(?:public\.)?(?:{table_alt})\b',
+        re.IGNORECASE,
+    )
+    setval_re = re.compile(
+        rf"setval\s*\(\s*'[^']*(?:accounts_user_id_seq|accounts_userprofile_id_seq)",
+        re.IGNORECASE,
+    )
+
+    # None | 'copy' | 'stmt'
+    skipping = None
+    with open(src_path, 'r', encoding='utf-8', errors='replace') as src, \
+            open(dst_path, 'w', encoding='utf-8') as dst:
+        for line in src:
+            if skipping == 'copy':
+                if line.strip() == r'\.':
+                    skipping = None
+                continue
+            if skipping == 'stmt':
+                if line.rstrip().endswith(';'):
+                    skipping = None
+                continue
+            if copy_re.match(line):
+                skipping = 'copy'
+                continue
+            if stmt_start_re.match(line):
+                if not line.rstrip().endswith(';'):
+                    skipping = 'stmt'
+                continue
+            if setval_re.search(line):
+                continue
+            dst.write(line)
+    return dst_path
+
+
 def _create_backup(request):
     backup_dir = settings.BACKUP_DIR
     os.makedirs(backup_dir, exist_ok=True)
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f'backup_{timestamp}.sql'
-    filepath = os.path.join(backup_dir, filename)
 
     db = settings.DATABASES['default']
     if db['ENGINE'] == 'django.db.backends.sqlite3':
         import shutil
+        filename = f'backup_{timestamp}.sqlite3'
+        filepath = os.path.join(backup_dir, filename)
         shutil.copy2(db['NAME'], filepath)
     else:
+        filename = f'backup_{timestamp}.sql'
+        filepath = os.path.join(backup_dir, filename)
         env = os.environ.copy()
         env['PGPASSWORD'] = db.get('PASSWORD', '')
         cmd = [
@@ -202,9 +324,19 @@ def _create_backup(request):
             '-f', filepath,
         ]
         try:
-            subprocess.run(cmd, env=env, check=True, capture_output=True)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            messages.error(request, 'فشل إنشاء النسخة الاحتياطية. تأكد من تثبيت pg_dump.')
+            subprocess.run(cmd, env=env, check=True, capture_output=True, text=True)
+        except FileNotFoundError:
+            messages.error(
+                request,
+                'فشل إنشاء النسخة الاحتياطية: أمر pg_dump غير موجود في السيرفر.',
+            )
+            return _redirect_with_tab(request, 'backup')
+        except subprocess.CalledProcessError as exc:
+            detail = (exc.stderr or exc.stdout or '').strip()
+            messages.error(
+                request,
+                f'فشل إنشاء النسخة الاحتياطية{" — " + detail if detail else "."}',
+            )
             return _redirect_with_tab(request, 'backup')
 
     return FileResponse(open(filepath, 'rb'), as_attachment=True, filename=filename)
@@ -218,18 +350,52 @@ def _restore_backup(request):
 
     backup_dir = settings.BACKUP_DIR
     os.makedirs(backup_dir, exist_ok=True)
-    filepath = os.path.join(backup_dir, uploaded.name)
+    safe_name = os.path.basename(uploaded.name)
+    filepath = os.path.join(backup_dir, safe_name)
 
     with open(filepath, 'wb+') as dest:
         for chunk in uploaded.chunks():
             dest.write(chunk)
 
+    try:
+        filepath = _decompress_backup_if_needed(filepath)
+    except OSError:
+        messages.error(request, 'تعذر فك ضغط ملف النسخة الاحتياطية.')
+        return _redirect_with_tab(request, 'backup')
+
+    users_snapshot = _snapshot_local_users()
     db = settings.DATABASES['default']
+
     if db['ENGINE'] == 'django.db.backends.sqlite3':
+        if not _is_sqlite_file(filepath):
+            messages.error(
+                request,
+                'الملف ليس نسخة SQLite صالحة. على اللوكل استخدم نسخة مأخوذة من نفس البيئة.',
+            )
+            return _redirect_with_tab(request, 'backup')
         import shutil
+        from django.db import connections
+        connections.close_all()
         shutil.copy2(filepath, db['NAME'])
-        messages.success(request, 'تم استعادة النسخة الاحتياطية.')
+        connections.close_all()
+        _restore_local_users(users_snapshot)
+        messages.success(request, 'تم استعادة النسخة الاحتياطية (مع الإبقاء على المستخدمين الحاليين).')
     else:
+        if _is_sqlite_file(filepath):
+            messages.error(
+                request,
+                'هذا ملف SQLite من البيئة المحلية — لا يمكن استعادته على Coolify (PostgreSQL). '
+                'أنشئ النسخة من إعدادات النسخ الاحتياطي على السيرفر نفسه ثم ارفعها.',
+            )
+            return _redirect_with_tab(request, 'backup')
+
+        filtered_path = os.path.join(backup_dir, f'_restore_no_users_{os.path.basename(filepath)}')
+        try:
+            _filter_sql_excluding_user_tables(filepath, filtered_path)
+        except OSError:
+            messages.error(request, 'تعذر تجهيز ملف الاستعادة.')
+            return _redirect_with_tab(request, 'backup')
+
         env = os.environ.copy()
         env['PGPASSWORD'] = db.get('PASSWORD', '')
         cmd = [
@@ -237,12 +403,30 @@ def _restore_backup(request):
             '-p', str(db.get('PORT', 5432)),
             '-U', db.get('USER', ''),
             '-d', db.get('NAME', ''),
-            '-f', filepath,
+            '-v', 'ON_ERROR_STOP=1',
+            '-f', filtered_path,
         ]
         try:
-            subprocess.run(cmd, env=env, check=True, capture_output=True)
-            messages.success(request, 'تم استعادة النسخة الاحتياطية.')
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            messages.error(request, 'فشل استعادة النسخة الاحتياطية.')
+            subprocess.run(cmd, env=env, check=True, capture_output=True, text=True)
+            _restore_local_users(users_snapshot)
+            messages.success(request, 'تم استعادة النسخة الاحتياطية (مع الإبقاء على المستخدمين الحاليين).')
+        except FileNotFoundError:
+            messages.error(
+                request,
+                'فشل الاستعادة: أمر psql غير موجود. أعد نشر الصورة بعد تثبيت postgresql-client.',
+            )
+        except subprocess.CalledProcessError as exc:
+            detail = (exc.stderr or exc.stdout or '').strip()
+            if len(detail) > 300:
+                detail = detail[:300] + '…'
+            messages.error(
+                request,
+                f'فشل استعادة النسخة الاحتياطية{" — " + detail if detail else "."}',
+            )
+        finally:
+            try:
+                os.remove(filtered_path)
+            except OSError:
+                pass
 
     return _redirect_with_tab(request, 'backup')
