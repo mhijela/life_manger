@@ -5,6 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ system_settings.company_name }}{% endblock %}</title>
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('inms-theme');
+                var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -130,6 +141,48 @@
             </div>
 
             <div class="topbar-end">
+                <button type="button" class="btn-icon" id="themeToggle" aria-label="تبديل الوضع الداكن" title="الوضع الداكن / الفاتح">
+                    <i class="bi bi-moon-stars" id="themeToggleIcon"></i>
+                </button>
+
+                <div class="dropdown topbar-notify">
+                    <button type="button" class="btn-icon notify-bell" id="notifyToggle"
+                            data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                            aria-expanded="false" aria-label="الإشعارات" title="الإشعارات">
+                        <i class="bi bi-bell"></i>
+                        {% if topbar_notifications_count %}
+                        <span class="notify-badge">{{ topbar_notifications_count }}</span>
+                        {% endif %}
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end notify-menu shadow">
+                        <div class="notify-menu-header">
+                            <strong>الإشعارات</strong>
+                            {% if topbar_notifications_count %}
+                            <span class="text-muted small">{{ topbar_notifications_count }}</span>
+                            {% endif %}
+                        </div>
+                        {% if topbar_notifications %}
+                        <div class="notify-menu-list">
+                            {% for n in topbar_notifications %}
+                            <a href="{{ n.url }}" class="notify-item tone-{{ n.tone }}">
+                                <span class="notify-item-icon"><i class="bi {{ n.icon }}"></i></span>
+                                <span class="notify-item-body">
+                                    <span class="notify-item-title">{{ n.title }}</span>
+                                    <span class="notify-item-sub">{{ n.subtitle }}</span>
+                                </span>
+                            </a>
+                            {% endfor %}
+                        </div>
+                        <a href="{% url 'dashboard:index' %}" class="notify-menu-footer">عرض لوحة التحكم</a>
+                        {% else %}
+                        <div class="notify-empty">
+                            <i class="bi bi-bell-slash"></i>
+                            لا توجد تنبيهات حالياً
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <a href="{% url 'settings_app:index' %}?tab=account" class="user-chip text-decoration-none" title="إعدادات الحساب">
                     <div class="user-avatar" aria-hidden="true">
                         {{ user.get_full_name|default:user.email|slice:":1"|upper }}

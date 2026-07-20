@@ -33,7 +33,38 @@ document.addEventListener('DOMContentLoaded', () => {
             bsAlert.close();
         }, 5000);
     });
+
+    initThemeToggle();
 });
+
+function getPreferredTheme() {
+    const stored = localStorage.getItem('inms-theme');
+    if (stored === 'light' || stored === 'dark') return stored;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const icon = document.getElementById('themeToggleIcon');
+    if (icon) {
+        icon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+    }
+    const btn = document.getElementById('themeToggle');
+    if (btn) {
+        btn.title = theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن';
+        btn.setAttribute('aria-label', btn.title);
+    }
+}
+
+function initThemeToggle() {
+    applyTheme(getPreferredTheme());
+    const btn = document.getElementById('themeToggle');
+    btn?.addEventListener('click', () => {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('inms-theme', next);
+        applyTheme(next);
+    });
+}
 
 function confirmDelete(url) {
     document.getElementById('deleteForm').action = url;

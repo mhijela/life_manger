@@ -57,6 +57,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.settings_app.context_processors.system_settings',
+                'apps.core.context_processors.topbar_notifications',
             ],
         },
     },
