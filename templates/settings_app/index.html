@@ -22,6 +22,11 @@
 
 <ul class="nav nav-tabs settings-tabs" id="settingsTabs" role="tablist">
     <li class="nav-item">
+        <button class="nav-link {% if active_tab == 'account' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-account" type="button">
+            <i class="bi bi-person-gear"></i> الحساب
+        </button>
+    </li>
+    <li class="nav-item">
         <button class="nav-link {% if active_tab == 'general' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-general" type="button">
             <i class="bi bi-building"></i> عام
         </button>
@@ -64,6 +69,60 @@
     <input type="hidden" name="active_tab" id="activeTabInput" value="{{ active_tab }}">
 
     <div class="tab-content settings-tab-content">
+        <!-- الحساب -->
+        <div class="tab-pane fade {% if active_tab == 'account' %}show active{% endif %}" id="tab-account" role="tabpanel">
+            <h5 class="mb-3">حسابي</h5>
+            <p class="text-muted small">تعديل بيانات الدخول والملف الشخصي للمستخدم الحالي</p>
+
+            <div class="border rounded p-3 mb-4">
+                <h6 class="mb-3"><i class="bi bi-person"></i> البيانات الشخصية</h6>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="{{ profile_form.first_name.id_for_label }}">{{ profile_form.first_name.label }}</label>
+                        {{ profile_form.first_name }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="{{ profile_form.last_name.id_for_label }}">{{ profile_form.last_name.label }}</label>
+                        {{ profile_form.last_name }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="{{ profile_form.email.id_for_label }}">{{ profile_form.email.label }}</label>
+                        {{ profile_form.email }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="{{ profile_form.phone.id_for_label }}">{{ profile_form.phone.label }}</label>
+                        {{ profile_form.phone }}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-action" data-action="account_profile" data-tab="account">
+                    <i class="bi bi-check-lg"></i> حفظ البيانات
+                </button>
+            </div>
+
+            <div class="border rounded p-3">
+                <h6 class="mb-3"><i class="bi bi-shield-lock"></i> تغيير كلمة المرور</h6>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="{{ password_form.current_password.id_for_label }}">{{ password_form.current_password.label }}</label>
+                        {{ password_form.current_password }}
+                    </div>
+                    <div class="col-md-6"></div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="{{ password_form.new_password1.id_for_label }}">{{ password_form.new_password1.label }}</label>
+                        {{ password_form.new_password1 }}
+                        {% if password_form.new_password1.help_text %}<div class="form-text">{{ password_form.new_password1.help_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="{{ password_form.new_password2.id_for_label }}">{{ password_form.new_password2.label }}</label>
+                        {{ password_form.new_password2 }}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-warning btn-action" data-action="account_password" data-tab="account">
+                    <i class="bi bi-key"></i> تغيير كلمة المرور
+                </button>
+            </div>
+        </div>
+
         <!-- عام -->
         <div class="tab-pane fade {% if active_tab == 'general' %}show active{% endif %}" id="tab-general" role="tabpanel">
             <h5 class="mb-3">الإعدادات العامة</h5>

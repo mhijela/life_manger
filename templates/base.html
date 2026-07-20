@@ -130,12 +130,12 @@
             </div>
 
             <div class="topbar-end">
-                <div class="user-chip">
+                <a href="{% url 'settings_app:index' %}?tab=account" class="user-chip text-decoration-none" title="إعدادات الحساب">
                     <div class="user-avatar" aria-hidden="true">
                         {{ user.get_full_name|default:user.email|slice:":1"|upper }}
                     </div>
                     <span class="user-name">{{ user.get_full_name|default:user.email }}</span>
-                </div>
+                </a>
                 <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-outline-danger btn-sm" title="تسجيل الخروج">

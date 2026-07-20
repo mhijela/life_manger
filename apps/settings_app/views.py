@@ -13,9 +13,11 @@ from .forms import SystemSettingsForm
 from apps.finance.forms import PaymentMethodForm
 from apps.finance.models import PaymentMethod
 from apps.messages.services.sms_service import SMSService
+from apps.accounts.forms import AccountProfileForm, AccountPasswordForm
+from django.contrib.auth import update_session_auth_hash
 from apps.finance.jawwal_pay_service import JawwalPayService
 
-VALID_TABS = {'general', 'finance', 'subscriptions', 'system', 'sms', 'jawwal', 'backup'}
+VALID_TABS = {'account', 'general', 'finance', 'subscriptions', 'system', 'sms', 'jawwal', 'backup'}
 
 
 def _redirect_with_tab(request, tab=None):
@@ -32,9 +34,30 @@ def index(request):
     if active_tab not in VALID_TABS:
         active_tab = 'general'
 
+    form = SystemSettingsForm(instance=sys_settings)
+
     if request.method == 'POST':
         action = request.POST.get('action')
-        if action == 'settings':
+        if action == 'account_profile':
+            profile_form = AccountProfileForm(request.user, request.POST)
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, 'تم تحديث بيانات الحساب.')
+            else:
+                for err in profile_form.errors.values():
+                    messages.error(request, err.as_text())
+            return _redirect_with_tab(request, 'account')
+        elif action == 'account_password':
+            password_form = AccountPasswordForm(request.user, request.POST)
+            if password_form.is_valid():
+                password_form.save()
+                update_session_auth_hash(request, request.user)
+                messages.success(request, 'تم تغيير كلمة المرور بنجاح.')
+            else:
+                for err in password_form.errors.values():
+                    messages.error(request, err.as_text())
+            return _redirect_with_tab(request, 'account')
+        elif action == 'settings':
             form = SystemSettingsForm(request.POST, request.FILES, instance=sys_settings)
             if form.is_valid():
                 form.save()
@@ -73,8 +96,9 @@ def index(request):
                 else:
                     messages.error(request, result.get('error', 'فشل الاتصال'))
             return _redirect_with_tab(request, 'jawwal')
-    else:
-        form = SystemSettingsForm(instance=sys_settings)
+
+    profile_form = AccountProfileForm(request.user)
+    password_form = AccountPasswordForm(request.user)
 
     sms_service = SMSService()
     sms_balance = sms_service.check_balance() if sms_service.is_configured() else None
@@ -90,6 +114,8 @@ def index(request):
 
     return render(request, 'settings_app/index.html', {
         'form': form,
+        'profile_form': profile_form,
+        'password_form': password_form,
         'sys_settings': sys_settings,
         'backups': backups,
         'sms_balance': sms_balance,
