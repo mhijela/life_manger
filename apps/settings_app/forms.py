@@ -20,6 +20,7 @@ class SystemSettingsForm(forms.ModelForm):
             'jawwal_username', 'jawwal_password', 'jawwal_base_url',
             'jawwal_request_payment_url', 'jawwal_transfer_url', 'jawwal_field_map', 'jawwal_session_path',
             'cashbox_opening_balance', 'auto_suspend_on_expiry', 'auto_renew_enabled', 'debt_sms_template',
+            'theme_primary', 'theme_mode', 'theme_radius',
         ]
         widgets = {
             'company_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -46,4 +47,11 @@ class SystemSettingsForm(forms.ModelForm):
             'auto_suspend_on_expiry': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'auto_renew_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'debt_sms_template': forms.Select(attrs={'class': 'form-select'}),
+            'theme_primary': forms.TextInput(attrs={
+                'class': 'form-control form-control-color',
+                'type': 'color',
+                'id': 'id_theme_primary',
+            }),
+            'theme_mode': forms.Select(attrs={'class': 'form-select'}),
+            'theme_radius': forms.Select(attrs={'class': 'form-select'}),
         }

@@ -86,6 +86,32 @@ class SystemSettings(models.Model):
         blank=True,
         default='requestPaymentViaSMS',
     )
+    theme_primary = models.CharField(
+        'اللون الأساسي',
+        max_length=7,
+        default='#6366f1',
+        help_text='اللون العام للهوية (مثل #6366f1)',
+    )
+    theme_mode = models.CharField(
+        'الوضع الافتراضي',
+        max_length=10,
+        choices=[
+            ('system', 'حسب النظام'),
+            ('light', 'فاتح'),
+            ('dark', 'داكن'),
+        ],
+        default='system',
+    )
+    theme_radius = models.CharField(
+        'استدارة العناصر',
+        max_length=10,
+        choices=[
+            ('soft', 'ناعمة'),
+            ('medium', 'متوسطة'),
+            ('sharp', 'حادّة'),
+        ],
+        default='medium',
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -96,7 +122,9 @@ class SystemSettings(models.Model):
         return self.company_name
 
     def save(self, *args, **kwargs):
+        from .theme import parse_hex
         self.pk = 1
+        self.theme_primary = parse_hex(self.theme_primary)
         super().save(*args, **kwargs)
 
     @classmethod
@@ -106,3 +134,7 @@ class SystemSettings(models.Model):
 
     def delete(self, *args, **kwargs):
         pass
+
+    def get_theme_css_vars(self):
+        from .theme import build_theme_vars
+        return build_theme_vars(self.theme_primary, radius_style=self.theme_radius)

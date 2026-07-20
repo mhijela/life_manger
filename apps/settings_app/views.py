@@ -17,7 +17,10 @@ from apps.accounts.forms import AccountProfileForm, AccountPasswordForm
 from django.contrib.auth import update_session_auth_hash
 from apps.finance.jawwal_pay_service import JawwalPayService
 
-VALID_TABS = {'account', 'general', 'finance', 'subscriptions', 'system', 'sms', 'jawwal', 'backup'}
+VALID_TABS = {
+    'account', 'general', 'appearance', 'finance', 'subscriptions',
+    'system', 'sms', 'jawwal', 'backup',
+}
 
 
 def _redirect_with_tab(request, tab=None):
@@ -125,6 +128,16 @@ def index(request):
         'sms_configured': sms_service.is_configured(),
         'jawwal_configured': jawwal_service.is_configured(),
         'active_tab': active_tab,
+        'theme_presets': [
+            ('#6366f1', 'Indigo'),
+            ('#0d9488', 'Teal'),
+            ('#059669', 'Emerald'),
+            ('#2563eb', 'Blue'),
+            ('#7c3aed', 'Violet'),
+            ('#db2777', 'Pink'),
+            ('#ea580c', 'Orange'),
+            ('#475569', 'Slate'),
+        ],
     })
 
 

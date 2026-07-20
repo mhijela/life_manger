@@ -514,6 +514,106 @@ a:hover { color: var(--primary-dark); }
     border-color: var(--border);
 }
 
+/* Appearance settings */
+.appearance-preview {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    min-height: 140px;
+    background: var(--surface-2);
+}
+
+.appearance-preview-sidebar {
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    padding: 0.85rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.appearance-preview-brand {
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.8rem;
+    margin-bottom: 0.35rem;
+}
+
+.appearance-preview-nav {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: var(--radius-xs);
+}
+
+.appearance-preview-nav.is-active {
+    background: var(--sidebar-active-bg, var(--preview-primary, var(--primary-subtle)));
+    color: #fff;
+    border-right: 3px solid var(--preview-primary, var(--primary));
+}
+
+.appearance-preview-main {
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.appearance-preview-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1rem;
+    box-shadow: var(--shadow-xs);
+    width: 100%;
+}
+
+.appearance-preview-stat {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.theme-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.theme-preset {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 2px solid var(--border);
+    background: var(--swatch);
+    padding: 0;
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.theme-preset:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 3px var(--primary-subtle);
+}
+
+.form-control-color {
+    width: 3.25rem;
+    height: 2.5rem;
+    padding: 0.2rem;
+}
+
+@media (max-width: 767.98px) {
+    .appearance-preview {
+        grid-template-columns: 1fr;
+    }
+    .appearance-preview-sidebar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+}
+
 /* ── Global Search ── */
 .topbar-search {
     flex: 1;

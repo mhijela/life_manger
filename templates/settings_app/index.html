@@ -32,6 +32,11 @@
         </button>
     </li>
     <li class="nav-item">
+        <button class="nav-link {% if active_tab == 'appearance' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-appearance" type="button">
+            <i class="bi bi-palette"></i> المظهر
+        </button>
+    </li>
+    <li class="nav-item">
         <button class="nav-link {% if active_tab == 'finance' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-finance" type="button">
             <i class="bi bi-cash-coin"></i> المالية
         </button>
@@ -142,6 +147,63 @@
                 </div>
             </div>
             <button type="submit" class="btn btn-primary btn-save" data-tab="general"><i class="bi bi-check-lg"></i> حفظ</button>
+        </div>
+
+        <!-- المظهر -->
+        <div class="tab-pane fade {% if active_tab == 'appearance' %}show active{% endif %}" id="tab-appearance" role="tabpanel">
+            <h5 class="mb-3">المظهر والهوية البصرية</h5>
+            <p class="text-muted small">خصص اللون العام للنظام، الوضع الافتراضي، واستدارة العناصر</p>
+
+            <div class="appearance-preview mb-4" id="appearancePreview">
+                <div class="appearance-preview-sidebar">
+                    <span class="appearance-preview-brand">{{ sys_settings.company_name }}</span>
+                    <span class="appearance-preview-nav is-active">لوحة التحكم</span>
+                    <span class="appearance-preview-nav">المشتركون</span>
+                </div>
+                <div class="appearance-preview-main">
+                    <div class="appearance-preview-card">
+                        <div class="appearance-preview-stat">24</div>
+                        <div class="small text-muted">مشتركون نشطون</div>
+                        <button type="button" class="btn btn-primary btn-sm mt-2">زر أساسي</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">{{ form.theme_primary.label }}</label>
+                    <div class="d-flex align-items-center gap-2">
+                        {{ form.theme_primary }}
+                        <input type="text" class="form-control" id="themePrimaryHex"
+                               value="{{ form.theme_primary.value|default:sys_settings.theme_primary }}"
+                               maxlength="7" dir="ltr" style="max-width:7.5rem">
+                    </div>
+                    <div class="form-text">اختر لوناً أو الصق كود Hex</div>
+                    <div class="theme-presets mt-2" id="themePresets">
+                        {% for hex, name in theme_presets %}
+                        <button type="button" class="theme-preset" data-color="{{ hex }}" title="{{ name }}" style="--swatch:{{ hex }}"></button>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.theme_mode.label }}</label>
+                    {{ form.theme_mode }}
+                    <div class="form-text">يُستخدم عند أول زيارة قبل اختيار المستخدم</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.theme_radius.label }}</label>
+                    {{ form.theme_radius }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">{{ form.logo.label }}</label>
+                    {{ form.logo }}
+                    {% if sys_settings.logo %}
+                    <div class="mt-2"><img src="{{ sys_settings.logo.url }}" height="40" class="rounded" alt="logo"></div>
+                    {% endif %}
+                    <div class="form-text">شعار الشبكة في الشريط الجانبي</div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-save mt-3" data-tab="appearance"><i class="bi bi-check-lg"></i> حفظ المظهر</button>
         </div>
 
         <!-- المالية -->
@@ -417,5 +479,74 @@ document.querySelectorAll('.btn-save, .btn-action').forEach(btn => {
         }
     });
 });
+
+(function initAppearanceControls() {
+    const colorInput = document.getElementById('id_theme_primary');
+    const hexInput = document.getElementById('themePrimaryHex');
+    const radiusSelect = document.getElementById('id_theme_radius');
+    const preview = document.getElementById('appearancePreview');
+    if (!colorInput || !hexInput) return;
+
+    const radiusMap = {
+        soft: { radius: '18px', sm: '12px', xs: '8px' },
+        medium: { radius: '14px', sm: '10px', xs: '6px' },
+        sharp: { radius: '8px', sm: '6px', xs: '4px' },
+    };
+
+    function normalizeHex(value) {
+        let v = String(value || '').trim();
+        if (!v.startsWith('#')) v = '#' + v;
+        if (/^#[0-9a-fA-F]{3}$/.test(v)) {
+            v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+        }
+        return /^#[0-9a-fA-F]{6}$/.test(v) ? v.toLowerCase() : null;
+    }
+
+    function mix(hex, toward, weight) {
+        const parse = (h) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+        const [r1, g1, b1] = parse(hex);
+        const [r2, g2, b2] = parse(toward);
+        const w = weight;
+        const ch = (a, b) => Math.round(a * (1 - w) + b * w).toString(16).padStart(2, '0');
+        return `#${ch(r1, r2)}${ch(g1, g2)}${ch(b1, b2)}`;
+    }
+
+    function applyPreview(hex) {
+        const primary = normalizeHex(hex);
+        if (!primary) return;
+        const dark = mix(primary, '#000000', 0.14);
+        const light = mix(primary, '#ffffff', 0.16);
+        const root = document.documentElement;
+        root.style.setProperty('--primary', primary);
+        root.style.setProperty('--primary-dark', dark);
+        root.style.setProperty('--primary-light', light);
+        root.style.setProperty('--primary-subtle', primary + '1f');
+        root.style.setProperty('--sidebar-active-border', primary);
+        if (preview) {
+            preview.style.setProperty('--preview-primary', primary);
+        }
+        colorInput.value = primary;
+        hexInput.value = primary;
+    }
+
+    function applyRadius(style) {
+        const cfg = radiusMap[style] || radiusMap.medium;
+        const root = document.documentElement;
+        root.style.setProperty('--radius', cfg.radius);
+        root.style.setProperty('--radius-sm', cfg.sm);
+        root.style.setProperty('--radius-xs', cfg.xs);
+    }
+
+    colorInput.addEventListener('input', () => applyPreview(colorInput.value));
+    hexInput.addEventListener('change', () => {
+        const v = normalizeHex(hexInput.value);
+        if (v) applyPreview(v);
+        else hexInput.value = colorInput.value;
+    });
+    document.querySelectorAll('#themePresets .theme-preset').forEach(btn => {
+        btn.addEventListener('click', () => applyPreview(btn.dataset.color));
+    });
+    radiusSelect?.addEventListener('change', () => applyRadius(radiusSelect.value));
+})();
 </script>
 {% endblock %}
