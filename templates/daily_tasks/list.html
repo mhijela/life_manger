@@ -3,184 +3,268 @@
 {% block breadcrumb %}المهام اليومية{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h4 class="page-heading">المهام اليومية</h4>
-        <p class="page-desc">تنظيم أعمال التركيب والصيانة والإصلاح والمهام العامة</p>
-    </div>
-    <div class="page-actions">
-        <a href="{% url 'daily_tasks:create' %}?date={{ selected_date }}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> إضافة مهمة
-        </a>
-    </div>
-</div>
-
-<div class="filter-bar">
-    <form method="get" class="row g-2 align-items-end">
-        <div class="col-lg-3 col-md-6">
-            <label class="form-label mb-1">بحث</label>
-            <input type="search" name="q" class="form-control" value="{{ search }}"
-                   placeholder="عنوان، مشترك، هاتف، موقع...">
+<div class="tasks-page">
+    <div class="page-header tasks-page-header">
+        <div>
+            <h4 class="page-heading">المهام اليومية</h4>
+            <p class="page-desc d-none d-md-block">تنظيم أعمال التركيب والصيانة والإصلاح والمهام العامة</p>
         </div>
-        <div class="col-lg-2 col-md-6">
-            <label class="form-label mb-1">التاريخ</label>
-            <input type="date" name="date" class="form-control" value="{{ selected_date }}">
-        </div>
-        <div class="col-lg-2 col-md-4">
-            <label class="form-label mb-1">الحالة</label>
-            <select name="status" class="form-select">
-                <option value="">كل الحالات</option>
-                {% for value, label in status_choices %}
-                <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-lg-2 col-md-4">
-            <label class="form-label mb-1">النوع</label>
-            <select name="type" class="form-select">
-                <option value="">كل الأنواع</option>
-                {% for value, label in type_choices %}
-                <option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-lg-2 col-md-4">
-            <label class="form-label mb-1">المسؤول</label>
-            <select name="assigned_to" class="form-select">
-                <option value="">الجميع</option>
-                {% for user in users %}
-                <option value="{{ user.pk }}" {% if current_assigned_to == user.pk|stringformat:"s" %}selected{% endif %}>
-                    {{ user.get_full_name|default:user.email }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-lg-1 col-md-12">
-            <button class="btn btn-primary w-100" type="submit" title="تطبيق الفلاتر">
-                <i class="bi bi-search"></i>
-            </button>
-        </div>
-        <div class="col-12 d-flex gap-2">
-            <a href="{% url 'daily_tasks:list' %}" class="btn btn-sm btn-outline-primary{% if not selected_date %} active{% endif %}">
-                كل المهام
-            </a>
-            <a href="{% url 'daily_tasks:list' %}?date={{ today|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary{% if selected_date == today|date:'Y-m-d' %} active{% endif %}">
-                مهام اليوم
+        <div class="page-actions d-none d-md-flex">
+            <a href="{% url 'daily_tasks:create' %}?date={{ selected_date }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> إضافة مهمة
             </a>
         </div>
-    </form>
-</div>
+    </div>
 
-<div class="card">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>المهمة</th>
-                    <th>النوع</th>
-                    <th>التاريخ والوقت</th>
-                    <th>المشترك / الموقع</th>
-                    <th>المسؤول</th>
-                    <th>الأولوية</th>
-                    <th>الحالة</th>
-                    <th>إجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for task in page_obj %}
-                <tr>
-                    <td>
-                        <strong>{{ task.title }}</strong>
-                        {% if task.description %}
-                        <div class="small text-muted text-truncate" style="max-width:260px;">{{ task.description }}</div>
-                        {% endif %}
-                    </td>
-                    <td>{{ task.get_task_type_display }}</td>
-                    <td>
-                        {{ task.scheduled_date }}
-                        {% if task.scheduled_time %}<div class="small text-muted">{{ task.scheduled_time|time:"H:i" }}</div>{% endif %}
-                    </td>
-                    <td>
-                        {% if task.subscriber %}
-                        <a href="{% url 'subscribers:detail' task.subscriber.pk %}">{{ task.subscriber.full_name }}</a>
-                        {% elif task.location %}
-                        {{ task.location }}
-                        {% else %}—{% endif %}
-                        {% if task.device %}<div class="small text-muted">{{ task.device.name }}</div>{% endif %}
-                    </td>
-                    <td>{{ task.assigned_to.get_full_name|default:task.assigned_to.email|default:"—" }}</td>
-                    <td>
-                        {% if task.priority == 'urgent' %}
-                        <span class="badge bg-danger">{{ task.get_priority_display }}</span>
-                        {% elif task.priority == 'high' %}
-                        <span class="badge bg-warning text-dark">{{ task.get_priority_display }}</span>
-                        {% elif task.priority == 'low' %}
-                        <span class="badge bg-secondary">{{ task.get_priority_display }}</span>
-                        {% else %}
-                        <span class="badge bg-info text-dark">{{ task.get_priority_display }}</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if task.status == 'completed' %}
-                        <span class="badge bg-success">{{ task.get_status_display }}</span>
-                        {% elif task.status == 'in_progress' %}
-                        <span class="badge bg-primary">{{ task.get_status_display }}</span>
-                        {% elif task.status == 'cancelled' %}
-                        <span class="badge bg-secondary">{{ task.get_status_display }}</span>
-                        {% else %}
-                        <span class="badge bg-warning text-dark">{{ task.get_status_display }}</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="btn-action-group">
-                            {% if task.status != 'completed' and task.status != 'cancelled' %}
-                            <form method="post" action="{% url 'daily_tasks:complete' task.pk %}">
-                                {% csrf_token %}
-                                <button class="btn btn-sm btn-outline-success" title="تحديد كمكتملة">
-                                    <i class="bi bi-check-lg"></i>
-                                </button>
-                            </form>
+    <div class="filter-bar tasks-filter-bar">
+        <form method="get" id="tasksFilterForm">
+            <div class="tasks-filter-primary">
+                <div class="tasks-search-wrap">
+                    <i class="bi bi-search"></i>
+                    <input type="search" name="q" class="form-control" value="{{ search }}"
+                           placeholder="ابحث عن مهمة، مشترك، موقع...">
+                </div>
+                <div class="tasks-quick-chips">
+                    <a href="{% url 'daily_tasks:list' %}" class="tasks-chip{% if not selected_date %} is-active{% endif %}">الكل</a>
+                    <a href="{% url 'daily_tasks:list' %}?date={{ today|date:'Y-m-d' }}" class="tasks-chip{% if selected_date == today|date:'Y-m-d' %} is-active{% endif %}">اليوم</a>
+                    <button type="button" class="tasks-chip tasks-chip-toggle" data-bs-toggle="collapse" data-bs-target="#tasksMoreFilters" aria-expanded="false">
+                        <i class="bi bi-sliders"></i> فلاتر
+                    </button>
+                </div>
+            </div>
+
+            <div class="collapse{% if selected_date or current_status or current_type or current_assigned_to %} show{% endif %}" id="tasksMoreFilters">
+                <div class="tasks-filter-grid">
+                    <div>
+                        <label class="form-label mb-1">التاريخ</label>
+                        <input type="date" name="date" class="form-control" value="{{ selected_date }}">
+                    </div>
+                    <div>
+                        <label class="form-label mb-1">الحالة</label>
+                        <select name="status" class="form-select">
+                            <option value="">كل الحالات</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label mb-1">النوع</label>
+                        <select name="type" class="form-select">
+                            <option value="">كل الأنواع</option>
+                            {% for value, label in type_choices %}
+                            <option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label mb-1">المسؤول</label>
+                        <select name="assigned_to" class="form-select">
+                            <option value="">الجميع</option>
+                            {% for user in users %}
+                            <option value="{{ user.pk }}" {% if current_assigned_to == user.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ user.get_full_name|default:user.email }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="tasks-filter-actions">
+                        <button class="btn btn-primary w-100" type="submit">تطبيق</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if page_obj %}
+    {# ── Mobile / tablet card feed ── #}
+    <div class="task-feed d-md-none">
+        {% for task in page_obj %}
+        <article class="task-item priority-{{ task.priority }} status-{{ task.status }}">
+            <div class="task-item-top">
+                <div class="task-item-meta">
+                    <span class="task-type">{{ task.get_task_type_display }}</span>
+                    <span class="task-dot" aria-hidden="true">·</span>
+                    <time datetime="{{ task.scheduled_date|date:'Y-m-d' }}">
+                        {{ task.scheduled_date|date:"j M" }}
+                        {% if task.scheduled_time %} · {{ task.scheduled_time|time:"H:i" }}{% endif %}
+                    </time>
+                </div>
+                {% if task.status == 'completed' %}
+                <span class="task-status is-done">{{ task.get_status_display }}</span>
+                {% elif task.status == 'in_progress' %}
+                <span class="task-status is-progress">{{ task.get_status_display }}</span>
+                {% elif task.status == 'cancelled' %}
+                <span class="task-status is-cancelled">{{ task.get_status_display }}</span>
+                {% else %}
+                <span class="task-status is-pending">{{ task.get_status_display }}</span>
+                {% endif %}
+            </div>
+
+            <h3 class="task-item-title">{{ task.title }}</h3>
+            {% if task.description %}
+            <p class="task-item-desc">{{ task.description }}</p>
+            {% endif %}
+
+            <div class="task-item-details">
+                {% if task.subscriber %}
+                <div class="task-detail">
+                    <i class="bi bi-person"></i>
+                    <a href="{% url 'subscribers:detail' task.subscriber.pk %}">{{ task.subscriber.full_name }}</a>
+                </div>
+                {% elif task.location %}
+                <div class="task-detail">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>{{ task.location }}</span>
+                </div>
+                {% endif %}
+                {% if task.assigned_to %}
+                <div class="task-detail">
+                    <i class="bi bi-person-gear"></i>
+                    <span>{{ task.assigned_to.get_full_name|default:task.assigned_to.email }}</span>
+                </div>
+                {% endif %}
+                {% if task.priority == 'urgent' or task.priority == 'high' %}
+                <div class="task-detail">
+                    <i class="bi bi-flag-fill"></i>
+                    <span>{{ task.get_priority_display }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="task-item-actions">
+                {% if task.status != 'completed' and task.status != 'cancelled' %}
+                <form method="post" action="{% url 'daily_tasks:complete' task.pk %}" class="flex-grow-1">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success task-action-btn w-100">
+                        <i class="bi bi-check-lg"></i> إتمام
+                    </button>
+                </form>
+                {% endif %}
+                <a href="{% url 'daily_tasks:edit' task.pk %}" class="btn btn-outline-primary task-action-btn">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'daily_tasks:delete' task.pk %}" class="btn btn-outline-danger task-action-btn">
+                    <i class="bi bi-trash3"></i>
+                </a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    {# ── Desktop table ── #}
+    <div class="card d-none d-md-block">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 tasks-table">
+                <thead>
+                    <tr>
+                        <th>المهمة</th>
+                        <th>النوع</th>
+                        <th>التاريخ والوقت</th>
+                        <th>المشترك / الموقع</th>
+                        <th>المسؤول</th>
+                        <th>الأولوية</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in page_obj %}
+                    <tr>
+                        <td>
+                            <strong>{{ task.title }}</strong>
+                            {% if task.description %}
+                            <div class="small text-muted text-truncate" style="max-width:260px;">{{ task.description }}</div>
                             {% endif %}
-                            <a href="{% url 'daily_tasks:edit' task.pk %}" class="btn btn-sm btn-outline-primary" title="تعديل">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <a href="{% url 'daily_tasks:delete' task.pk %}" class="btn btn-sm btn-outline-danger" title="حذف">
-                                <i class="bi bi-trash3"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="8">
-                        <div class="empty-state">
-                            <i class="bi bi-list-check"></i>
-                            لا توجد مهام مطابقة — <a href="{% url 'daily_tasks:create' %}?date={{ selected_date }}">أضف مهمة جديدة</a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                        <td>{{ task.get_task_type_display }}</td>
+                        <td>
+                            {{ task.scheduled_date }}
+                            {% if task.scheduled_time %}<div class="small text-muted">{{ task.scheduled_time|time:"H:i" }}</div>{% endif %}
+                        </td>
+                        <td>
+                            {% if task.subscriber %}
+                            <a href="{% url 'subscribers:detail' task.subscriber.pk %}">{{ task.subscriber.full_name }}</a>
+                            {% elif task.location %}
+                            {{ task.location }}
+                            {% else %}—{% endif %}
+                            {% if task.device %}<div class="small text-muted">{{ task.device.name }}</div>{% endif %}
+                        </td>
+                        <td>{{ task.assigned_to.get_full_name|default:task.assigned_to.email|default:"—" }}</td>
+                        <td>
+                            {% if task.priority == 'urgent' %}
+                            <span class="badge bg-danger">{{ task.get_priority_display }}</span>
+                            {% elif task.priority == 'high' %}
+                            <span class="badge bg-warning text-dark">{{ task.get_priority_display }}</span>
+                            {% elif task.priority == 'low' %}
+                            <span class="badge bg-secondary">{{ task.get_priority_display }}</span>
+                            {% else %}
+                            <span class="badge bg-info text-dark">{{ task.get_priority_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if task.status == 'completed' %}
+                            <span class="badge bg-success">{{ task.get_status_display }}</span>
+                            {% elif task.status == 'in_progress' %}
+                            <span class="badge bg-primary">{{ task.get_status_display }}</span>
+                            {% elif task.status == 'cancelled' %}
+                            <span class="badge bg-secondary">{{ task.get_status_display }}</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">{{ task.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-action-group">
+                                {% if task.status != 'completed' and task.status != 'cancelled' %}
+                                <form method="post" action="{% url 'daily_tasks:complete' task.pk %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-success" title="تحديد كمكتملة">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <a href="{% url 'daily_tasks:edit' task.pk %}" class="btn btn-sm btn-outline-primary" title="تعديل">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'daily_tasks:delete' task.pk %}" class="btn btn-sm btn-outline-danger" title="حذف">
+                                    <i class="bi bi-trash3"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-    {% if page_obj.has_other_pages %}
-    <div class="card-footer">
-        <nav>
-            <ul class="pagination justify-content-center mb-0">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&date={{ selected_date }}&status={{ current_status }}&type={{ current_type }}&assigned_to={{ current_assigned_to }}&q={{ search }}">السابق</a>
-                </li>
-                {% endif %}
-                <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&date={{ selected_date }}&status={{ current_status }}&type={{ current_type }}&assigned_to={{ current_assigned_to }}&q={{ search }}">التالي</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
+    {% else %}
+    <div class="task-empty">
+        <i class="bi bi-list-check"></i>
+        <p>لا توجد مهام مطابقة</p>
+        <a href="{% url 'daily_tasks:create' %}?date={{ selected_date }}" class="btn btn-primary">أضف مهمة جديدة</a>
     </div>
     {% endif %}
+
+    {% if page_obj.has_other_pages %}
+    <nav class="tasks-pagination" aria-label="صفحات المهام">
+        <ul class="pagination justify-content-center mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&date={{ selected_date }}&status={{ current_status }}&type={{ current_type }}&assigned_to={{ current_assigned_to }}&q={{ search }}">السابق</a>
+            </li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&date={{ selected_date }}&status={{ current_status }}&type={{ current_type }}&assigned_to={{ current_assigned_to }}&q={{ search }}">التالي</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <a href="{% url 'daily_tasks:create' %}?date={{ selected_date }}" class="tasks-fab d-md-none" aria-label="إضافة مهمة">
+        <i class="bi bi-plus-lg"></i>
+    </a>
 </div>
 {% endblock %}
