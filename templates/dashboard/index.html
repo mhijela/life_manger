@@ -115,7 +115,7 @@
                     {% for sub in expiring_soon %}
                     <li class="list-group-item">
                         <a href="{% url 'subscribers:detail' sub.subscriber_id %}" class="item-name text-decoration-none">{{ sub.subscriber.full_name }}</a>
-                        <span class="badge bg-warning text-dark">{{ sub.end_date }}</span>
+                        <span class="badge bg-warning">{{ sub.end_date }}</span>
                     </li>
                     {% empty %}
                     <li class="list-group-item empty-state py-4">

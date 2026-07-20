@@ -3,8 +3,8 @@
 {% block breadcrumb %}المهام اليومية{% endblock %}
 
 {% block content %}
-<div class="tasks-page">
-    <div class="page-header tasks-page-header">
+<div class="mlist-page">
+    <div class="page-header">
         <div>
             <h4 class="page-heading">المهام اليومية</h4>
             <p class="page-desc d-none d-md-block">تنظيم أعمال التركيب والصيانة والإصلاح والمهام العامة</p>
@@ -16,30 +16,30 @@
         </div>
     </div>
 
-    <div class="filter-bar tasks-filter-bar">
+    <div class="filter-bar mlist-filter">
         <form method="get" id="tasksFilterForm">
-            <div class="tasks-filter-primary">
-                <div class="tasks-search-wrap">
+            <div class="mlist-filter-primary">
+                <div class="mlist-search">
                     <i class="bi bi-search"></i>
                     <input type="search" name="q" class="form-control" value="{{ search }}"
                            placeholder="ابحث عن مهمة، مشترك، موقع...">
                 </div>
-                <div class="tasks-quick-chips">
-                    <a href="{% url 'daily_tasks:list' %}" class="tasks-chip{% if not selected_date %} is-active{% endif %}">الكل</a>
-                    <a href="{% url 'daily_tasks:list' %}?date={{ today|date:'Y-m-d' }}" class="tasks-chip{% if selected_date == today|date:'Y-m-d' %} is-active{% endif %}">اليوم</a>
-                    <button type="button" class="tasks-chip tasks-chip-toggle" data-bs-toggle="collapse" data-bs-target="#tasksMoreFilters" aria-expanded="false">
+                <div class="mlist-chips">
+                    <a href="{% url 'daily_tasks:list' %}" class="mlist-chip{% if not selected_date %} is-active{% endif %}">الكل</a>
+                    <a href="{% url 'daily_tasks:list' %}?date={{ today|date:'Y-m-d' }}" class="mlist-chip{% if selected_date == today|date:'Y-m-d' %} is-active{% endif %}">اليوم</a>
+                    <button type="button" class="mlist-chip" data-bs-toggle="collapse" data-bs-target="#tasksMoreFilters" aria-expanded="false">
                         <i class="bi bi-sliders"></i> فلاتر
                     </button>
                 </div>
             </div>
 
             <div class="collapse{% if selected_date or current_status or current_type or current_assigned_to %} show{% endif %}" id="tasksMoreFilters">
-                <div class="tasks-filter-grid">
-                    <div>
+                <div class="row g-2 align-items-end mt-2">
+                    <div class="col-md-3">
                         <label class="form-label mb-1">التاريخ</label>
                         <input type="date" name="date" class="form-control" value="{{ selected_date }}">
                     </div>
-                    <div>
+                    <div class="col-md-3">
                         <label class="form-label mb-1">الحالة</label>
                         <select name="status" class="form-select">
                             <option value="">كل الحالات</option>
@@ -48,7 +48,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div>
+                    <div class="col-md-2">
                         <label class="form-label mb-1">النوع</label>
                         <select name="type" class="form-select">
                             <option value="">كل الأنواع</option>
@@ -57,7 +57,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div>
+                    <div class="col-md-2">
                         <label class="form-label mb-1">المسؤول</label>
                         <select name="assigned_to" class="form-select">
                             <option value="">الجميع</option>
@@ -68,7 +68,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="tasks-filter-actions">
+                    <div class="col-md-2">
                         <button class="btn btn-primary w-100" type="submit">تطبيق</button>
                     </div>
                 </div>
@@ -77,74 +77,72 @@
     </div>
 
     {% if page_obj %}
-    {# ── Mobile / tablet card feed ── #}
-    <div class="task-feed d-md-none">
+    <div class="mlist-feed d-md-none">
         {% for task in page_obj %}
-        <article class="task-item priority-{{ task.priority }} status-{{ task.status }}">
-            <div class="task-item-top">
-                <div class="task-item-meta">
-                    <span class="task-type">{{ task.get_task_type_display }}</span>
-                    <span class="task-dot" aria-hidden="true">·</span>
-                    <time datetime="{{ task.scheduled_date|date:'Y-m-d' }}">
-                        {{ task.scheduled_date|date:"j M" }}
+        <article class="mlist-item {% if task.status == 'completed' %}is-success is-done{% elif task.priority == 'urgent' %}is-danger{% elif task.priority == 'high' %}is-warning{% elif task.priority == 'low' %}is-muted{% else %}is-info{% endif %}">
+            <div class="mlist-item-top">
+                <div>
+                    <div class="mlist-kicker">
+                        {{ task.get_task_type_display }}
+                        · {{ task.scheduled_date|date:"j M" }}
                         {% if task.scheduled_time %} · {{ task.scheduled_time|time:"H:i" }}{% endif %}
-                    </time>
+                    </div>
+                    <h3 class="mlist-title">{{ task.title }}</h3>
                 </div>
                 {% if task.status == 'completed' %}
-                <span class="task-status is-done">{{ task.get_status_display }}</span>
+                <span class="mlist-status is-success">{{ task.get_status_display }}</span>
                 {% elif task.status == 'in_progress' %}
-                <span class="task-status is-progress">{{ task.get_status_display }}</span>
+                <span class="mlist-status is-primary">{{ task.get_status_display }}</span>
                 {% elif task.status == 'cancelled' %}
-                <span class="task-status is-cancelled">{{ task.get_status_display }}</span>
+                <span class="mlist-status">{{ task.get_status_display }}</span>
                 {% else %}
-                <span class="task-status is-pending">{{ task.get_status_display }}</span>
+                <span class="mlist-status is-warning">{{ task.get_status_display }}</span>
                 {% endif %}
             </div>
 
-            <h3 class="task-item-title">{{ task.title }}</h3>
             {% if task.description %}
-            <p class="task-item-desc">{{ task.description }}</p>
+            <p class="mlist-desc">{{ task.description }}</p>
             {% endif %}
 
-            <div class="task-item-details">
+            <div class="mlist-details">
                 {% if task.subscriber %}
-                <div class="task-detail">
+                <div class="mlist-detail">
                     <i class="bi bi-person"></i>
                     <a href="{% url 'subscribers:detail' task.subscriber.pk %}">{{ task.subscriber.full_name }}</a>
                 </div>
                 {% elif task.location %}
-                <div class="task-detail">
+                <div class="mlist-detail">
                     <i class="bi bi-geo-alt"></i>
                     <span>{{ task.location }}</span>
                 </div>
                 {% endif %}
                 {% if task.assigned_to %}
-                <div class="task-detail">
+                <div class="mlist-detail">
                     <i class="bi bi-person-gear"></i>
                     <span>{{ task.assigned_to.get_full_name|default:task.assigned_to.email }}</span>
                 </div>
                 {% endif %}
                 {% if task.priority == 'urgent' or task.priority == 'high' %}
-                <div class="task-detail">
+                <div class="mlist-detail">
                     <i class="bi bi-flag-fill"></i>
                     <span>{{ task.get_priority_display }}</span>
                 </div>
                 {% endif %}
             </div>
 
-            <div class="task-item-actions">
+            <div class="mlist-actions">
                 {% if task.status != 'completed' and task.status != 'cancelled' %}
                 <form method="post" action="{% url 'daily_tasks:complete' task.pk %}" class="flex-grow-1">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-success task-action-btn w-100">
+                    <button type="submit" class="btn btn-success w-100">
                         <i class="bi bi-check-lg"></i> إتمام
                     </button>
                 </form>
                 {% endif %}
-                <a href="{% url 'daily_tasks:edit' task.pk %}" class="btn btn-outline-primary task-action-btn">
+                <a href="{% url 'daily_tasks:edit' task.pk %}" class="btn btn-outline-primary">
                     <i class="bi bi-pencil"></i>
                 </a>
-                <a href="{% url 'daily_tasks:delete' task.pk %}" class="btn btn-outline-danger task-action-btn">
+                <a href="{% url 'daily_tasks:delete' task.pk %}" class="btn btn-outline-danger">
                     <i class="bi bi-trash3"></i>
                 </a>
             </div>
@@ -152,10 +150,9 @@
         {% endfor %}
     </div>
 
-    {# ── Desktop table ── #}
     <div class="card d-none d-md-block">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 tasks-table">
+            <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
                         <th>المهمة</th>
@@ -195,11 +192,11 @@
                             {% if task.priority == 'urgent' %}
                             <span class="badge bg-danger">{{ task.get_priority_display }}</span>
                             {% elif task.priority == 'high' %}
-                            <span class="badge bg-warning text-dark">{{ task.get_priority_display }}</span>
+                            <span class="badge bg-warning">{{ task.get_priority_display }}</span>
                             {% elif task.priority == 'low' %}
                             <span class="badge bg-secondary">{{ task.get_priority_display }}</span>
                             {% else %}
-                            <span class="badge bg-info text-dark">{{ task.get_priority_display }}</span>
+                            <span class="badge bg-info">{{ task.get_priority_display }}</span>
                             {% endif %}
                         </td>
                         <td>
@@ -210,7 +207,7 @@
                             {% elif task.status == 'cancelled' %}
                             <span class="badge bg-secondary">{{ task.get_status_display }}</span>
                             {% else %}
-                            <span class="badge bg-warning text-dark">{{ task.get_status_display }}</span>
+                            <span class="badge bg-warning">{{ task.get_status_display }}</span>
                             {% endif %}
                         </td>
                         <td>
@@ -238,7 +235,7 @@
         </div>
     </div>
     {% else %}
-    <div class="task-empty">
+    <div class="mlist-empty">
         <i class="bi bi-list-check"></i>
         <p>لا توجد مهام مطابقة</p>
         <a href="{% url 'daily_tasks:create' %}?date={{ selected_date }}" class="btn btn-primary">أضف مهمة جديدة</a>
@@ -246,7 +243,7 @@
     {% endif %}
 
     {% if page_obj.has_other_pages %}
-    <nav class="tasks-pagination" aria-label="صفحات المهام">
+    <nav class="mlist-pagination" aria-label="صفحات المهام">
         <ul class="pagination justify-content-center mb-0">
             {% if page_obj.has_previous %}
             <li class="page-item">
@@ -263,7 +260,7 @@
     </nav>
     {% endif %}
 
-    <a href="{% url 'daily_tasks:create' %}?date={{ selected_date }}" class="tasks-fab d-md-none" aria-label="إضافة مهمة">
+    <a href="{% url 'daily_tasks:create' %}?date={{ selected_date }}" class="mlist-fab d-md-none" aria-label="إضافة مهمة">
         <i class="bi bi-plus-lg"></i>
     </a>
 </div>

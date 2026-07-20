@@ -56,6 +56,11 @@ def with_alpha(color: str, alpha: float) -> str:
     return f'rgba({r}, {g}, {b}, {a:.3f})'
 
 
+def rgb_csv(color: str) -> str:
+    r, g, b = hex_to_rgb(color)
+    return f'{r}, {g}, {b}'
+
+
 RADIUS_PRESETS = {
     'soft': {'radius': '18px', 'radius_sm': '12px', 'radius_xs': '8px'},
     'medium': {'radius': '14px', 'radius_sm': '10px', 'radius_xs': '6px'},
@@ -69,15 +74,31 @@ def build_theme_vars(
     radius_style: str = 'medium',
 ) -> dict[str, str]:
     primary = parse_hex(primary)
+    primary_dark = darken(primary, 0.14)
+    primary_light = lighten(primary, 0.16)
     radius = RADIUS_PRESETS.get(radius_style, RADIUS_PRESETS['medium'])
     return {
         'primary': primary,
-        'primary_dark': darken(primary, 0.14),
-        'primary_light': lighten(primary, 0.16),
+        'primary_dark': primary_dark,
+        'primary_light': primary_light,
         'primary_subtle': with_alpha(primary, 0.12),
+        'primary_rgb': rgb_csv(primary),
+        'primary_dark_rgb': rgb_csv(primary_dark),
+        'primary_light_rgb': rgb_csv(primary_light),
         'sidebar_active_bg': with_alpha(primary, 0.18),
         'sidebar_active_border': primary,
+        'glow_primary': with_alpha(primary, 0.35),
+        'glow_primary_soft': with_alpha(primary, 0.22),
         'radius': radius['radius'],
         'radius_sm': radius['radius_sm'],
         'radius_xs': radius['radius_xs'],
+        # Dark-mode brand pair (lighter primary for contrast on dark surfaces)
+        'dark_primary': primary_light,
+        'dark_primary_dark': primary,
+        'dark_primary_light': primary_dark,
+        'dark_primary_subtle': with_alpha(primary_light, 0.16),
+        'dark_primary_rgb': rgb_csv(primary_light),
+        'dark_sidebar_active_bg': with_alpha(primary_light, 0.18),
+        'dark_sidebar_active_border': primary_light,
+        'dark_glow_primary': with_alpha(primary_light, 0.4),
     }

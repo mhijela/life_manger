@@ -13,28 +13,29 @@
     right: 0;
     max-height: 240px;
     overflow-y: auto;
-    background: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,.1);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
     display: none;
 }
 .package-suggestions.show { display: block; }
 .package-suggestion {
     padding: 0.55rem 0.85rem;
     cursor: pointer;
-    border-bottom: 1px solid #f1f3f5;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
 }
 .package-suggestion:last-child { border-bottom: none; }
 .package-suggestion:hover,
-.package-suggestion.active { background: #f8f9fa; }
+.package-suggestion.active { background: var(--surface-2); }
 .package-suggestion.add-new {
-    color: var(--bs-primary);
+    color: var(--primary);
     font-weight: 500;
 }
 .package-selected-info {
     font-size: 0.875rem;
-    color: #6c757d;
+    color: var(--text-secondary);
 }
 </style>
 {% endblock %}

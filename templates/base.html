@@ -30,19 +30,31 @@
             --primary-dark: {{ tv.primary_dark }};
             --primary-light: {{ tv.primary_light }};
             --primary-subtle: {{ tv.primary_subtle }};
+            --primary-rgb: {{ tv.primary_rgb }};
+            --glow-primary: {{ tv.glow_primary }};
+            --glow-primary-soft: {{ tv.glow_primary_soft }};
             --sidebar-active-bg: {{ tv.sidebar_active_bg }};
             --sidebar-active-border: {{ tv.sidebar_active_border }};
             --radius: {{ tv.radius }};
             --radius-sm: {{ tv.radius_sm }};
             --radius-xs: {{ tv.radius_xs }};
+            --bs-primary: {{ tv.primary }};
+            --bs-primary-rgb: {{ tv.primary_rgb }};
+            --focus-ring: 0 0 0 3px {{ tv.primary_subtle }};
         }
         [data-theme="dark"] {
-            --primary: {{ tv.primary_light }};
-            --primary-dark: {{ tv.primary }};
-            --primary-light: {{ tv.primary_dark }};
-            --primary-subtle: {{ tv.primary_subtle }};
-            --sidebar-active-bg: {{ tv.sidebar_active_bg }};
-            --sidebar-active-border: {{ tv.primary_light }};
+            --primary: {{ tv.dark_primary }};
+            --primary-dark: {{ tv.dark_primary_dark }};
+            --primary-light: {{ tv.dark_primary_light }};
+            --primary-subtle: {{ tv.dark_primary_subtle }};
+            --primary-rgb: {{ tv.dark_primary_rgb }};
+            --glow-primary: {{ tv.dark_glow_primary }};
+            --glow-primary-soft: {{ tv.glow_primary_soft }};
+            --sidebar-active-bg: {{ tv.dark_sidebar_active_bg }};
+            --sidebar-active-border: {{ tv.dark_sidebar_active_border }};
+            --bs-primary: {{ tv.dark_primary }};
+            --bs-primary-rgb: {{ tv.dark_primary_rgb }};
+            --focus-ring: 0 0 0 3px {{ tv.dark_primary_subtle }};
         }
     </style>
     {% endwith %}

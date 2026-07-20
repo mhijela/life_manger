@@ -132,7 +132,7 @@
                                 {% elif sub.status == 'expired' or sub.end_date < today %}
                                 <span class="badge bg-danger">منتهي</span>
                                 {% elif sub.days_remaining <= 7 %}
-                                <span class="badge bg-warning text-dark">ينتهي قريباً</span>
+                                <span class="badge bg-warning">ينتهي قريباً</span>
                                 {% else %}
                                 <span class="badge bg-success">ساري</span>
                                 {% endif %}
