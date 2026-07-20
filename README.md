@@ -62,35 +62,30 @@ docker-compose exec web python manage.py load_demo_data
 
 ## النشر على Coolify
 
-جاهز لـ: **ربط الريبو + متغيرات البيئة + Deploy**.
+جاهز لـ: **ربط الريبو + متغيرات البيئة + Deploy** (بدون Redis).
 
-### الخطوة 1 — قاعدة البيانات و Redis في Coolify
-1. **New Resource → PostgreSQL** → أنشئ قاعدة → انسخ **Internal URL**  
-   هذا هو `DATABASE_URL`، مثال:
-   ```
-   postgres://postgres:PASSWORD@xxxxxxxx:5432/postgres
-   ```
-2. **New Resource → Redis** → أنشئ → انسخ **Internal URL**  
-   هذا هو `CELERY_BROKER_URL`، مثال:
-   ```
-   redis://xxxxxxxx:6379/0
-   ```
+### الخطوة 1 — قاعدة البيانات في Coolify
+**New Resource → PostgreSQL** → أنشئ قاعدة → انسخ **Internal URL**  
+هذا هو `DATABASE_URL`، مثال:
+```
+postgres://postgres:PASSWORD@xxxxxxxx:5432/postgres
+```
 
 ### الخطوة 2 — نشر التطبيق
 1. **New Resource → Docker Compose**
 2. اربط المستودع: `https://github.com/mhijela/life_manger`
 3. ملف التركيب: `docker-compose.yml`
-4. في **Environment** ضع (انظر أيضاً `.env.example`):
+4. في **Environment** ضع (انظر `.env.coolify`):
 
 | المتغير | القيمة |
 |---------|--------|
 | `SECRET_KEY` | مفتاح عشوائي طويل |
 | `DEBUG` | `False` |
-| `ALLOWED_HOSTS` | `your-domain.com` |
-| `CSRF_TRUSTED_ORIGINS` | `https://your-domain.com` |
+| `ALLOWED_HOSTS` | `postdelivery.pw,www.postdelivery.pw` |
+| `CSRF_TRUSTED_ORIGINS` | `https://postdelivery.pw,https://www.postdelivery.pw` |
 | `DATABASE_URL` | رابط PostgreSQL من Coolify |
-| `CELERY_BROKER_URL` | رابط Redis من Coolify |
-| `DB_SSL` | `False` (أو `True` إذا طلب Coolify) |
+| `DB_SSL` | `False` |
+| `USE_CELERY` | `False` |
 
 5. فعّل HTTPS للنطاق → **Deploy**
 
@@ -98,10 +93,13 @@ docker-compose exec web python manage.py load_demo_data
 بعد فتح الموقع ستظهر شاشة **إعداد المدير** تلقائياً.
 أدخل الاسم والبريد وكلمة المرور — ثم تدخل مباشرة للوحة التحكم.
 (لا حاجة لأمر `createsuperuser` من التيرمنال)
+
 ### ملاحظات
 - الترحيلات و`collectstatic` تتم تلقائياً عند إقلاع `web`
 - Volume `media_data` يحفظ الملفات المرفوعة
-- الخدمات في الـ compose: `web` + `celery` + `celery-beat` فقط (قاعدة البيانات و Redis من Coolify)
+- خدمة واحدة فقط: `web` (PostgreSQL من Coolify)
+- للتجديد التلقائي لاحقاً يمكن إضافة Cron في Coolify:
+  `python manage.py process_auto_renewals --no-sms`
 
 ## هيكل التطبيقات
 

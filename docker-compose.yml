@@ -1,5 +1,5 @@
-# Coolify: Docker Compose
-# 1) أنشئ PostgreSQL + Redis في Coolify وانسخ روابطهما
+# Coolify: Docker Compose — خدمة واحدة فقط (بدون Redis/Celery)
+# 1) أنشئ PostgreSQL في Coolify وانسخ Internal URL → DATABASE_URL
 # 2) الصق المتغيرات في Environment ثم Deploy
 
 services:
@@ -18,8 +18,8 @@ services:
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:?Set ALLOWED_HOSTS}
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL:?Set CELERY_BROKER_URL}
       DB_SSL: ${DB_SSL:-False}
+      USE_CELERY: ${USE_CELERY:-False}
     healthcheck:
       test:
         [
@@ -32,40 +32,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 90s
-
-  celery:
-    build: .
-    restart: unless-stopped
-    command: celery -A config worker -l info
-    volumes:
-      - media_data:/app/media
-    environment:
-      DJANGO_SETTINGS_MODULE: config.settings.production
-      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY}
-      DEBUG: ${DEBUG:-False}
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?Set ALLOWED_HOSTS}
-      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL:?Set CELERY_BROKER_URL}
-      DB_SSL: ${DB_SSL:-False}
-    depends_on:
-      web:
-        condition: service_started
-
-  celery-beat:
-    build: .
-    restart: unless-stopped
-    command: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    environment:
-      DJANGO_SETTINGS_MODULE: config.settings.production
-      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY}
-      DEBUG: ${DEBUG:-False}
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?Set ALLOWED_HOSTS}
-      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL:?Set CELERY_BROKER_URL}
-      DB_SSL: ${DB_SSL:-False}
-    depends_on:
-      web:
-        condition: service_started
 
 volumes:
   media_data:

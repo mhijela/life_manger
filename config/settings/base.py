@@ -105,9 +105,18 @@ LOGOUT_REDIRECT_URL = 'accounts:login'
 # Pagination default (overridden by SystemSettings)
 PAGINATION_SIZE = 20
 
-# Celery
-CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+# Celery (optional — disabled by default for small Coolify deploys)
+USE_CELERY = config('USE_CELERY', default=False, cast=bool)
+_celery_broker = config('CELERY_BROKER_URL', default='').strip()
+if USE_CELERY and _celery_broker:
+    CELERY_BROKER_URL = _celery_broker
+    CELERY_RESULT_BACKEND = _celery_broker
+    CELERY_TASK_ALWAYS_EAGER = False
+else:
+    # No Redis needed: tasks run inline if called; schedule via management commands / Coolify cron
+    CELERY_BROKER_URL = 'memory://'
+    CELERY_RESULT_BACKEND = 'cache+memory://'
+    CELERY_TASK_ALWAYS_EAGER = True
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
