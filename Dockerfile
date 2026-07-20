@@ -23,7 +23,7 @@ RUN chmod +x /app/entrypoint.sh /app/healthcheck.sh \
 EXPOSE 8000
 
 # Do not put ${VAR} inline here — Coolify injects ARGs and breaks Dockerfile parsing.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
     CMD ["/app/healthcheck.sh"]
 
 ENTRYPOINT ["/app/entrypoint.sh"]
