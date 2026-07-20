@@ -586,6 +586,11 @@ a:hover { color: var(--primary-dark); }
 
 .stat-card .card-body { padding: 1.25rem; }
 
+.stat-card .stat-text {
+    min-width: 0;
+    line-height: 1.25;
+}
+
 .stat-card .stat-icon {
     width: 48px;
     height: 48px;
@@ -613,10 +618,11 @@ a:hover { color: var(--primary-dark); }
 }
 
 .stat-card .stat-sublabel {
-    color: var(--text-muted, #6c757d);
-    font-size: 0.75rem;
-    font-weight: 500;
-    margin-top: 0.25rem;
+    color: var(--success);
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 0.2rem;
+    white-space: nowrap;
 }
 
 .stat-card .stat-trend {
