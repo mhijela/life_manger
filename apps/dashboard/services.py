@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from apps.subscribers.models import Subscriber
+from apps.subscriptions.models import Subscription
 from apps.finance.models import Debt, Cashbox
 from apps.inventory.models import InventoryItem
 from apps.devices.models import Device
@@ -14,10 +15,27 @@ def get_dashboard_stats():
 
     subscribers = Subscriber.objects.aggregate(
         total=Count('id'),
-        active=Count('id', filter=Q(status='active')),
-        expired=Count('id', filter=Q(status='expired')),
         debtors=Count('id', filter=Q(status='debtor')),
         suspended=Count('id', filter=Q(status='suspended')),
+    )
+
+    # يعتمد على الاشتراك الفعلي (وليس حقل status الذي يصبح "مدين" رغم سريان الاشتراك)
+    active_subscription_qs = Subscription.objects.filter(
+        status='active',
+        end_date__gte=today,
+    )
+    active_subscribers = (
+        active_subscription_qs.values('subscriber_id').distinct().count()
+    )
+    auto_renew_subscriptions = active_subscription_qs.filter(auto_renew=True).count()
+    expired_subscribers = (
+        Subscription.objects.filter(
+            Q(status='expired')
+            | Q(status='active', end_date__lt=today)
+        )
+        .values('subscriber_id')
+        .distinct()
+        .count()
     )
 
     total_debts = Debt.objects.exclude(status='paid').aggregate(
@@ -35,8 +53,9 @@ def get_dashboard_stats():
 
     return {
         'total_subscribers': subscribers['total'],
-        'active_subscribers': subscribers['active'],
-        'expired_subscribers': subscribers['expired'],
+        'active_subscribers': active_subscribers,
+        'auto_renew_subscriptions': auto_renew_subscriptions,
+        'expired_subscribers': expired_subscribers,
         'debtor_subscribers': subscribers['debtors'],
         'suspended_subscribers': subscribers['suspended'],
         'total_debts': remaining_debts,
