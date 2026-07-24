@@ -29,7 +29,11 @@ def send_view(request):
         form = SendMessageForm(request.POST)
         if form.is_valid():
             sms = SMSService()
-            log = sms.send(form.cleaned_data['recipient'], form.cleaned_data['message'])
+            log = sms.send(
+                form.cleaned_data['recipient'],
+                form.cleaned_data['message'],
+                template=form.cleaned_data.get('selected_template'),
+            )
             if log.status == 'sent':
                 django_messages.success(request, 'تم إرسال الرسالة بنجاح.')
             else:

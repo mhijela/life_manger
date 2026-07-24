@@ -1,1 +1,143 @@
-{% extends 'finance/payment_form.html' %}
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block breadcrumb %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="card form-card">
+            <div class="card-header">{{ title }}</div>
+            <div class="card-body">
+                <form method="post" id="sendMessageForm" novalidate>
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.recipient_choice.id_for_label }}">{{ form.recipient_choice.label }}</label>
+                        {{ form.recipient_choice }}
+                        {% if form.recipient_choice.errors %}
+                        <div class="text-danger small mt-1">{{ form.recipient_choice.errors|striptags }}</div>
+                        {% endif %}
+                        <div class="form-text">اختر مشتركاً من القائمة أو «رقم آخر» لإدخال رقم خارج المشتركين</div>
+                    </div>
+
+                    <div class="mb-3{% if form.recipient_choice.value != '__other__' and not form.recipient.errors %} d-none{% endif %}" id="customPhoneWrap">
+                        <label class="form-label" for="{{ form.recipient.id_for_label }}">{{ form.recipient.label }}</label>
+                        {{ form.recipient }}
+                        {% if form.recipient.errors %}
+                        <div class="text-danger small mt-1">{{ form.recipient.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label d-block mb-2">{{ form.message_source.label }}</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            {% for radio in form.message_source %}
+                            <div class="form-check">
+                                {{ radio.tag }}
+                                <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if form.message_source.errors %}
+                        <div class="text-danger small mt-1">{{ form.message_source.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3" id="templateWrap">
+                        <label class="form-label" for="id_template">{{ form.template.label }}</label>
+                        <select name="template" id="id_template" class="form-select">
+                            <option value="">— اختر قالباً —</option>
+                            {% for t in form.fields.template.queryset %}
+                            <option value="{{ t.pk }}"
+                                    data-body="{{ t.body|escape }}"
+                                    {% if form.template.value|stringformat:'s' == t.pk|stringformat:'s' %}selected{% endif %}>
+                                {{ t.name }} ({{ t.get_template_type_display }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.template.errors %}
+                        <div class="text-danger small mt-1">{{ form.template.errors|striptags }}</div>
+                        {% endif %}
+                        <div class="form-text">يُرسل نص القالب مع تعبئة بيانات المشترك إن وُجد</div>
+                        <pre class="small text-muted mt-2 mb-0 d-none p-2 rounded border" id="templatePreview" style="white-space:pre-wrap;background:var(--surface-2);"></pre>
+                    </div>
+
+                    <div class="mb-3 d-none" id="customMessageWrap">
+                        <label class="form-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+                        {{ form.message }}
+                        {% if form.message.errors %}
+                        <div class="text-danger small mt-1">{{ form.message.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> إرسال</button>
+                        <a href="{% url 'messages:index' %}" class="btn btn-outline-secondary">إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const recipientChoice = document.getElementById('id_recipient_choice');
+    const phoneWrap = document.getElementById('customPhoneWrap');
+    const phone = document.getElementById('id_recipient');
+    const templateWrap = document.getElementById('templateWrap');
+    const customMessageWrap = document.getElementById('customMessageWrap');
+    const templateSelect = document.getElementById('id_template');
+    const message = document.getElementById('id_message');
+    const preview = document.getElementById('templatePreview');
+    const sourceRadios = document.querySelectorAll('input[name="message_source"]');
+
+    function selectedSource() {
+        const checked = document.querySelector('input[name="message_source"]:checked');
+        return checked ? checked.value : 'template';
+    }
+
+    function syncRecipient() {
+        if (!recipientChoice || !phoneWrap || !phone) return;
+        const isOther = recipientChoice.value === '__other__';
+        phoneWrap.classList.toggle('d-none', !isOther);
+        phone.required = isOther;
+        if (!isOther) phone.value = '';
+    }
+
+    function syncMessageSource() {
+        const isTemplate = selectedSource() === 'template';
+        if (templateWrap) templateWrap.classList.toggle('d-none', !isTemplate);
+        if (customMessageWrap) customMessageWrap.classList.toggle('d-none', isTemplate);
+        if (templateSelect) templateSelect.required = isTemplate;
+        if (message) message.required = !isTemplate;
+        updatePreview();
+    }
+
+    function updatePreview() {
+        if (!preview || !templateSelect) return;
+        const opt = templateSelect.options[templateSelect.selectedIndex];
+        const body = opt && opt.value ? (opt.dataset.body || '') : '';
+        if (selectedSource() === 'template' && body) {
+            preview.textContent = body;
+            preview.classList.remove('d-none');
+        } else {
+            preview.textContent = '';
+            preview.classList.add('d-none');
+        }
+    }
+
+    recipientChoice?.addEventListener('change', syncRecipient);
+    sourceRadios.forEach(r => r.addEventListener('change', syncMessageSource));
+    templateSelect?.addEventListener('change', updatePreview);
+
+    syncRecipient();
+    syncMessageSource();
+})();
+</script>
+{% endblock %}

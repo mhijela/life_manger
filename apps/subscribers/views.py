@@ -25,6 +25,8 @@ from .forms import (
     HubRenewForm,
     HubDebtSettleForm,
 )
+from .services import get_expiry_reminder_template, send_expiry_reminder_sms
+from apps.messages.services.sms_service import SMSService
 
 
 def _current_subscription(subscriber):
@@ -124,7 +126,23 @@ def list_view(request):
         'per_page': per_page,
         'per_page_options': per_page_options,
         'today': today,
+        'sms_configured': SMSService().is_configured(),
+        'expiry_sms_template': get_expiry_reminder_template(),
     })
+
+
+@login_required
+@require_POST
+def send_reminder_sms(request, pk):
+    subscriber = get_object_or_404(Subscriber, pk=pk)
+    log, error = send_expiry_reminder_sms(subscriber)
+    if error:
+        messages.error(request, error)
+    elif log and log.status == 'sent':
+        messages.success(request, f'تم إرسال رسالة التذكير إلى {subscriber.full_name}.')
+    else:
+        messages.error(request, (log.error_message if log else None) or 'فشل إرسال الرسالة.')
+    return redirect('subscribers:list')
 
 
 @login_required

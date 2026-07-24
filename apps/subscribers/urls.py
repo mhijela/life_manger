@@ -13,6 +13,7 @@ urlpatterns = [
     path('<int:pk>/settle-debt/', views.hub_settle_debt, name='hub_settle_debt'),
     path('<int:pk>/edit/', views.edit_view, name='edit'),
     path('<int:pk>/delete/', views.delete_view, name='delete'),
+    path('<int:pk>/send-reminder-sms/', views.send_reminder_sms, name='send_reminder_sms'),
     path('<int:pk>/suspend/', views.suspend_view, name='suspend'),
     path('<int:pk>/activate/', views.activate_view, name='activate'),
 ]
