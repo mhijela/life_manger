@@ -1573,7 +1573,9 @@ a.stat-sublabel:hover {
 
 .btn-action-group {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.25rem;
+    justify-content: flex-start;
 }
 
 /* ── Forms ── */

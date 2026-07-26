@@ -8,6 +8,7 @@ from django.db.models import DecimalField, F, OuterRef, Prefetch, Q, Subquery, S
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from apps.core.mixins import paginate_queryset
 from apps.finance.models import Payment, Debt, PaymentMethod
@@ -40,6 +41,19 @@ def _current_subscription(subscriber):
 
 def _open_debts(subscriber):
     return subscriber.debts.exclude(status='paid').order_by('due_date')
+
+
+def _hub_redirect(request, pk):
+    next_url = (request.POST.get('next') or '').strip()
+    if next_url.startswith('/') and not next_url.startswith('//'):
+        return redirect(next_url)
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(next_url)
+    return redirect('subscribers:detail', pk=pk)
 
 
 @login_required
@@ -118,6 +132,7 @@ def list_view(request):
         )
 
     page_obj = paginate_queryset(request, queryset, per_page=per_page)
+    payment_methods = PaymentMethod.objects.filter(is_active=True)
     return render(request, 'subscribers/list.html', {
         'page_obj': page_obj,
         'subscription_state_choices': [
@@ -138,6 +153,11 @@ def list_view(request):
         'today': today,
         'sms_configured': SMSService().is_configured(),
         'expiry_sms_template': get_expiry_reminder_template(),
+        'has_payment_methods': payment_methods.exists(),
+        'pay_form': HubPaymentForm(),
+        'renew_form': HubRenewForm(),
+        'add_debt_form': HubDebtCreateForm(initial={'due_date': today}),
+        'list_next': request.get_full_path(),
     })
 
 
@@ -202,7 +222,7 @@ def hub_add_debt(request, pk):
     form = HubDebtCreateForm(request.POST)
     if not form.is_valid():
         messages.error(request, 'تعذّر تسجيل الدين. تحقق من البيانات.')
-        return redirect('subscribers:detail', pk=pk)
+        return _hub_redirect(request, pk)
 
     data = form.cleaned_data
     Debt.objects.create(
@@ -214,7 +234,7 @@ def hub_add_debt(request, pk):
     )
     subscriber.update_status()
     messages.success(request, 'تم إضافة الدين على المشترك.')
-    return redirect('subscribers:detail', pk=pk)
+    return _hub_redirect(request, pk)
 
 
 @login_required
@@ -224,7 +244,7 @@ def hub_pay(request, pk):
     form = HubPaymentForm(request.POST)
     if not form.is_valid():
         messages.error(request, 'تعذر تسجيل القبض. تحقق من البيانات.')
-        return redirect('subscribers:detail', pk=pk)
+        return _hub_redirect(request, pk)
 
     data = form.cleaned_data
     Payment.objects.create(
@@ -249,7 +269,7 @@ def hub_pay(request, pk):
         )
     else:
         messages.success(request, 'تم تسجيل القبض.')
-    return redirect('subscribers:detail', pk=pk)
+    return _hub_redirect(request, pk)
 
 
 @login_required
@@ -259,12 +279,12 @@ def hub_renew(request, pk):
     sub = _current_subscription(subscriber)
     if not sub:
         messages.error(request, 'لا يوجد اشتراك يمكن تجديده.')
-        return redirect('subscribers:detail', pk=pk)
+        return _hub_redirect(request, pk)
 
     form = HubRenewForm(request.POST)
     if not form.is_valid():
         messages.error(request, 'تعذر تجديد الاشتراك. تحقق من البيانات.')
-        return redirect('subscribers:detail', pk=pk)
+        return _hub_redirect(request, pk)
 
     data = form.cleaned_data
     package = data['package']
@@ -294,7 +314,7 @@ def hub_renew(request, pk):
         )
 
     messages.success(request, 'تم تجديد الاشتراك.')
-    return redirect('subscribers:detail', pk=pk)
+    return _hub_redirect(request, pk)
 
 
 @login_required

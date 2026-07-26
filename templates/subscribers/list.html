@@ -7,7 +7,7 @@
     <div class="page-header">
         <div>
             <h4 class="page-heading">المشتركين</h4>
-            <p class="page-desc d-none d-md-block">إضافة مشترك مع اشتراكه، والتجديد والقبض من صفحة كل زبون</p>
+            <p class="page-desc d-none d-md-block">إضافة مشترك مع اشتراكه، والقبض والتجديد والدين من الإجراءات مباشرة</p>
         </div>
         <div class="page-actions d-none d-md-flex">
             <a href="{% url 'subscriptions:packages' %}" class="btn btn-outline-secondary">
@@ -113,7 +113,34 @@
                 <div class="mlist-detail"><i class="bi bi-cash"></i><span>{{ s.monthly_price }} {{ system_settings.currency_symbol }}</span></div>
             </div>
             <div class="mlist-actions">
-                <a href="{% url 'subscribers:detail' s.pk %}" class="btn btn-primary flex-grow-1">عرض</a>
+                <button type="button" class="btn btn-success btn-hub-pay"
+                        title="قبض"
+                        data-bs-toggle="modal" data-bs-target="#listPayModal"
+                        data-url="{% url 'subscribers:hub_pay' s.pk %}"
+                        data-name="{{ s.full_name }}"
+                        data-amount="{{ s.monthly_price }}"
+                        data-debt="{{ s.total_debt|default_if_none:0 }}"
+                        {% if not has_payment_methods %}disabled{% endif %}>
+                    <i class="bi bi-cash-coin"></i>
+                </button>
+                <button type="button" class="btn btn-primary btn-hub-renew"
+                        title="تجديد"
+                        data-bs-toggle="modal" data-bs-target="#listRenewModal"
+                        data-url="{% url 'subscribers:hub_renew' s.pk %}"
+                        data-name="{{ s.full_name }}"
+                        data-package-id="{% if sub %}{{ sub.package_id }}{% endif %}"
+                        data-end-date="{% if sub %}{{ sub.end_date }}{% endif %}"
+                        {% if not sub %}disabled{% endif %}>
+                    <i class="bi bi-arrow-repeat"></i>
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-hub-debt"
+                        title="دين"
+                        data-bs-toggle="modal" data-bs-target="#listDebtModal"
+                        data-url="{% url 'subscribers:hub_add_debt' s.pk %}"
+                        data-name="{{ s.full_name }}"
+                        data-amount="{{ s.monthly_price }}">
+                    <i class="bi bi-plus-circle"></i>
+                </button>
                 <button type="button" class="btn btn-outline-primary btn-reminder-sms"
                         title="إرسال تذكير"
                         data-url="{% url 'subscribers:send_reminder_sms' s.pk %}"
@@ -121,8 +148,9 @@
                         {% if not sms_configured or not expiry_sms_template or not s.phone %}disabled{% endif %}>
                     <i class="bi bi-chat-dots"></i>
                 </button>
-                <a href="{% url 'subscribers:edit' s.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i></a>
-                <button type="button" class="btn btn-outline-danger" onclick="confirmDelete('{% url 'subscribers:delete' s.pk %}')"><i class="bi bi-trash3"></i></button>
+                <a href="{% url 'subscribers:detail' s.pk %}" class="btn btn-outline-secondary" title="عرض"><i class="bi bi-eye"></i></a>
+                <a href="{% url 'subscribers:edit' s.pk %}" class="btn btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                <button type="button" class="btn btn-outline-danger" title="حذف" onclick="confirmDelete('{% url 'subscribers:delete' s.pk %}')"><i class="bi bi-trash3"></i></button>
             </div>
         </article>
         {% endwith %}
@@ -179,7 +207,36 @@
                         </td>
                         <td>{{ s.monthly_price }} {{ system_settings.currency_symbol }}</td>
                         <td>
+                            {% with sub=s.subscription_list.0 %}
                             <div class="btn-action-group">
+                                <button type="button" class="btn btn-sm btn-success btn-hub-pay"
+                                        title="قبض"
+                                        data-bs-toggle="modal" data-bs-target="#listPayModal"
+                                        data-url="{% url 'subscribers:hub_pay' s.pk %}"
+                                        data-name="{{ s.full_name }}"
+                                        data-amount="{{ s.monthly_price }}"
+                                        data-debt="{{ s.total_debt|default_if_none:0 }}"
+                                        {% if not has_payment_methods %}disabled{% endif %}>
+                                    <i class="bi bi-cash-coin"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary btn-hub-renew"
+                                        title="تجديد"
+                                        data-bs-toggle="modal" data-bs-target="#listRenewModal"
+                                        data-url="{% url 'subscribers:hub_renew' s.pk %}"
+                                        data-name="{{ s.full_name }}"
+                                        data-package-id="{% if sub %}{{ sub.package_id }}{% endif %}"
+                                        data-end-date="{% if sub %}{{ sub.end_date }}{% endif %}"
+                                        {% if not sub %}disabled{% endif %}>
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-hub-debt"
+                                        title="دين"
+                                        data-bs-toggle="modal" data-bs-target="#listDebtModal"
+                                        data-url="{% url 'subscribers:hub_add_debt' s.pk %}"
+                                        data-name="{{ s.full_name }}"
+                                        data-amount="{{ s.monthly_price }}">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
                                 <button type="button" class="btn btn-sm btn-outline-primary btn-reminder-sms"
                                         title="إرسال تذكير اشتراك"
                                         data-url="{% url 'subscribers:send_reminder_sms' s.pk %}"
@@ -190,6 +247,7 @@
                                 <a href="{% url 'subscribers:edit' s.pk %}" class="btn btn-sm btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
                                 <button class="btn btn-sm btn-outline-danger" title="حذف" onclick="confirmDelete('{% url 'subscribers:delete' s.pk %}')"><i class="bi bi-trash3"></i></button>
                             </div>
+                            {% endwith %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -223,6 +281,125 @@
 </div>
 
 <form method="post" id="singleSmsForm" style="display:none">{% csrf_token %}</form>
+
+{# ── Modal: قبض ── #}
+<div class="modal fade" id="listPayModal" tabindex="-1" aria-labelledby="listPayModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="" class="modal-content" id="listPayForm">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ list_next }}">
+            <div class="modal-header">
+                <h5 class="modal-title" id="listPayModalLabel">تسجيل قبض</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body">
+                {% if not has_payment_methods %}
+                <div class="alert alert-warning mb-0">
+                    لا توجد طرق دفع مفعّلة.
+                    <a href="{% url 'settings_app:payment_methods' %}">أضف طريقة دفع من الإعدادات</a>
+                </div>
+                {% else %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ pay_form.amount.id_for_label }}">{{ pay_form.amount.label }}</label>
+                    {{ pay_form.amount }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ pay_form.payment_date.id_for_label }}">{{ pay_form.payment_date.label }}</label>
+                    {{ pay_form.payment_date }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ pay_form.method.id_for_label }}">{{ pay_form.method.label }}</label>
+                    {{ pay_form.method }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ pay_form.description.id_for_label }}">{{ pay_form.description.label }}</label>
+                    {{ pay_form.description }}
+                </div>
+                <div class="form-text" id="listPayDebtHint" hidden></div>
+                {% endif %}
+            </div>
+            {% if has_payment_methods %}
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" class="btn btn-success">حفظ القبض</button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{# ── Modal: تجديد ── #}
+<div class="modal fade" id="listRenewModal" tabindex="-1" aria-labelledby="listRenewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="" class="modal-content" id="listRenewForm">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ list_next }}">
+            <div class="modal-header">
+                <h5 class="modal-title" id="listRenewModalLabel">تجديد اشتراك</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3" id="listRenewEndHint"></p>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ renew_form.package.id_for_label }}">{{ renew_form.package.label }}</label>
+                    {{ renew_form.package }}
+                </div>
+                <div class="form-check mb-2">
+                    {{ renew_form.create_debt }}
+                    <label class="form-check-label" for="{{ renew_form.create_debt.id_for_label }}">{{ renew_form.create_debt.label }}</label>
+                </div>
+                <div class="form-check mb-3">
+                    {{ renew_form.create_payment }}
+                    <label class="form-check-label" for="{{ renew_form.create_payment.id_for_label }}">{{ renew_form.create_payment.label }}</label>
+                </div>
+                <div class="mb-3" id="listRenewPaymentMethodWrap">
+                    <label class="form-label" for="{{ renew_form.payment_method.id_for_label }}">{{ renew_form.payment_method.label }}</label>
+                    {{ renew_form.payment_method }}
+                </div>
+                <div class="mb-0">
+                    <label class="form-label" for="{{ renew_form.notes.id_for_label }}">{{ renew_form.notes.label }}</label>
+                    {{ renew_form.notes }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" class="btn btn-primary">تجديد</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# ── Modal: إضافة دين ── #}
+<div class="modal fade" id="listDebtModal" tabindex="-1" aria-labelledby="listDebtModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="" class="modal-content" id="listDebtForm">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ list_next }}">
+            <div class="modal-header">
+                <h5 class="modal-title" id="listDebtModalLabel">إضافة دين</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="{{ add_debt_form.total_amount.id_for_label }}">{{ add_debt_form.total_amount.label }}</label>
+                    {{ add_debt_form.total_amount }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ add_debt_form.due_date.id_for_label }}">{{ add_debt_form.due_date.label }}</label>
+                    {{ add_debt_form.due_date }}
+                </div>
+                <div class="mb-0">
+                    <label class="form-label" for="{{ add_debt_form.notes.id_for_label }}">{{ add_debt_form.notes.label }}</label>
+                    {{ add_debt_form.notes }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" class="btn btn-danger">حفظ الدين</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -237,6 +414,78 @@
             smsForm.submit();
         });
     });
+
+    var currency = '{{ system_settings.currency_symbol|escapejs }}';
+    var payModal = document.getElementById('listPayModal');
+    var renewModal = document.getElementById('listRenewModal');
+    var debtModal = document.getElementById('listDebtModal');
+
+    if (payModal) {
+        payModal.addEventListener('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            if (!btn) return;
+            var form = document.getElementById('listPayForm');
+            form.action = btn.dataset.url || '';
+            document.getElementById('listPayModalLabel').textContent = 'تسجيل قبض — ' + (btn.dataset.name || '');
+            var amountInput = form.querySelector('[name="amount"]');
+            if (amountInput && btn.dataset.amount) amountInput.value = btn.dataset.amount;
+            var hint = document.getElementById('listPayDebtHint');
+            var debt = parseFloat(btn.dataset.debt || '0');
+            if (hint) {
+                if (debt > 0) {
+                    hint.hidden = false;
+                    hint.textContent = 'أي قبض يُخصم تلقائياً من المديونية (المتبقي حالياً ' + debt + ' ' + currency + ').';
+                } else {
+                    hint.hidden = true;
+                    hint.textContent = '';
+                }
+            }
+        });
+    }
+
+    var renewPayCheck = document.getElementById('{{ renew_form.create_payment.id_for_label }}');
+    var renewMethodWrap = document.getElementById('listRenewPaymentMethodWrap');
+    function toggleRenewMethod() {
+        if (!renewPayCheck || !renewMethodWrap) return;
+        renewMethodWrap.style.display = renewPayCheck.checked ? '' : 'none';
+    }
+    if (renewPayCheck) {
+        renewPayCheck.addEventListener('change', toggleRenewMethod);
+        toggleRenewMethod();
+    }
+
+    if (renewModal) {
+        renewModal.addEventListener('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            if (!btn) return;
+            var form = document.getElementById('listRenewForm');
+            form.action = btn.dataset.url || '';
+            document.getElementById('listRenewModalLabel').textContent = 'تجديد اشتراك — ' + (btn.dataset.name || '');
+            var hint = document.getElementById('listRenewEndHint');
+            if (hint) {
+                hint.innerHTML = btn.dataset.endDate
+                    ? ('التجديد من تاريخ انتهاء الاشتراك الحالي: <strong>' + btn.dataset.endDate + '</strong>')
+                    : '';
+            }
+            var packageSelect = form.querySelector('[name="package"]');
+            if (packageSelect && btn.dataset.packageId) {
+                packageSelect.value = btn.dataset.packageId;
+            }
+            toggleRenewMethod();
+        });
+    }
+
+    if (debtModal) {
+        debtModal.addEventListener('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            if (!btn) return;
+            var form = document.getElementById('listDebtForm');
+            form.action = btn.dataset.url || '';
+            document.getElementById('listDebtModalLabel').textContent = 'إضافة دين — ' + (btn.dataset.name || '');
+            var amountInput = form.querySelector('[name="total_amount"]');
+            if (amountInput && btn.dataset.amount) amountInput.value = btn.dataset.amount;
+        });
+    }
 })();
 </script>
 {% endblock %}
