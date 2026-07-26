@@ -4,12 +4,14 @@ from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import OuterRef, Prefetch, Q, Subquery
+from django.db.models import DecimalField, F, OuterRef, Prefetch, Q, Subquery, Sum, Value
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from apps.core.mixins import paginate_queryset
-from apps.finance.models import Payment, Debt, DebtPayment, PaymentMethod
+from apps.finance.models import Payment, Debt, PaymentMethod
+from apps.finance.services import apply_payment_to_open_debts
 from apps.subscriptions.models import Package, Subscription
 from apps.subscriptions.services import (
     create_subscriber_subscription,
@@ -23,7 +25,7 @@ from .forms import (
     AreaForm,
     HubPaymentForm,
     HubRenewForm,
-    HubDebtSettleForm,
+    HubDebtCreateForm,
 )
 from .services import get_expiry_reminder_template, send_expiry_reminder_sms
 from apps.messages.services.sms_service import SMSService
@@ -49,6 +51,14 @@ def list_view(request):
         latest_subscription_status=Subquery(latest_subscription.values('status')[:1]),
         latest_subscription_end_date=Subquery(latest_subscription.values('end_date')[:1]),
         latest_subscription_auto_renew=Subquery(latest_subscription.values('auto_renew')[:1]),
+        total_debt=Coalesce(
+            Sum(
+                F('debts__total_amount') - F('debts__paid_amount'),
+                filter=Q(debts__status__in=['pending', 'partial']),
+            ),
+            Value(0),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        ),
     ).prefetch_related(
         Prefetch(
             'subscriptions',
@@ -164,23 +174,47 @@ def detail_view(request, pk):
         renew_form.fields['package'].queryset = Package.objects.filter(
             Q(is_active=True) | Q(pk=current_sub.package_id)
         ).distinct()
-    settle_form = HubDebtSettleForm()
+    add_debt_form = HubDebtCreateForm(initial={
+        'total_amount': subscriber.monthly_price or (current_sub.price if current_sub else None),
+        'due_date': timezone.localdate(),
+    })
     return render(request, 'subscribers/detail.html', {
         'subscriber': subscriber,
         'current_subscription': current_sub,
         'subscriptions': subscriber.subscriptions.select_related('package').order_by('-end_date'),
         'payments': subscriber.payments.select_related('method').order_by('-payment_date')[:20],
         'debts': subscriber.debts.order_by('-due_date'),
-        'open_debts': open_debts,
         'debt_remaining': debt_remaining,
         'assets': subscriber.assets.select_related('category'),
         'payment_methods': payment_methods,
         'has_payment_methods': payment_methods.exists(),
         'pay_form': pay_form,
         'renew_form': renew_form,
-        'settle_form': settle_form,
+        'add_debt_form': add_debt_form,
         'today': timezone.localdate(),
     })
+
+
+@login_required
+@require_POST
+def hub_add_debt(request, pk):
+    subscriber = get_object_or_404(Subscriber, pk=pk)
+    form = HubDebtCreateForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'تعذّر تسجيل الدين. تحقق من البيانات.')
+        return redirect('subscribers:detail', pk=pk)
+
+    data = form.cleaned_data
+    Debt.objects.create(
+        subscriber=subscriber,
+        total_amount=data['total_amount'],
+        due_date=data['due_date'],
+        notes=data.get('notes') or '',
+        status='pending',
+    )
+    subscriber.update_status()
+    messages.success(request, 'تم إضافة الدين على المشترك.')
+    return redirect('subscribers:detail', pk=pk)
 
 
 @login_required
@@ -201,18 +235,20 @@ def hub_pay(request, pk):
         description=data.get('description') or 'قبض من صفحة المشترك',
         created_by=request.user,
     )
-
-    if data.get('renew_subscription'):
-        sub = _current_subscription(subscriber)
-        if sub:
-            renew_subscription(sub, package=sub.package, user=request.user, notes='تجديد مع القبض')
-            messages.success(request, 'تم تسجيل القبض وتجديد الاشتراك.')
-        else:
-            messages.success(request, 'تم تسجيل القبض. لا يوجد اشتراك للتجديد.')
+    applied = apply_payment_to_open_debts(
+        subscriber,
+        data['amount'],
+        data['payment_date'],
+        data['method'],
+    )
+    subscriber.update_status()
+    if applied:
+        messages.success(
+            request,
+            f'تم تسجيل القبض وخصم {applied} من المديونية.',
+        )
     else:
         messages.success(request, 'تم تسجيل القبض.')
-
-    subscriber.update_status()
     return redirect('subscribers:detail', pk=pk)
 
 
@@ -260,46 +296,6 @@ def hub_renew(request, pk):
     messages.success(request, 'تم تجديد الاشتراك.')
     return redirect('subscribers:detail', pk=pk)
 
-
-@login_required
-@require_POST
-def hub_settle_debt(request, pk):
-    subscriber = get_object_or_404(Subscriber, pk=pk)
-    form = HubDebtSettleForm(request.POST)
-    if not form.is_valid():
-        messages.error(request, 'تعذر تسديد الدين. تحقق من البيانات.')
-        return redirect('subscribers:detail', pk=pk)
-
-    data = form.cleaned_data
-    debt = get_object_or_404(Debt, pk=data['debt_id'], subscriber=subscriber)
-    if debt.status == 'paid':
-        messages.warning(request, 'هذا الدين مسدد بالكامل.')
-        return redirect('subscribers:detail', pk=pk)
-
-    amount = data['amount']
-    if amount > debt.remaining_amount:
-        messages.error(request, 'المبلغ أكبر من المتبقي على الدين.')
-        return redirect('subscribers:detail', pk=pk)
-
-    DebtPayment.objects.create(
-        debt=debt,
-        amount=amount,
-        payment_date=data['payment_date'],
-        method=data['method'],
-    )
-    debt.paid_amount += amount
-    debt.update_status()
-    subscriber.update_status()
-    Payment.objects.create(
-        subscriber=subscriber,
-        amount=amount,
-        payment_date=data['payment_date'],
-        method=data['method'],
-        description=f'سداد دين مستحق بتاريخ {debt.due_date}',
-        created_by=request.user,
-    )
-    messages.success(request, 'تم تسجيل تسديد الدين.')
-    return redirect('subscribers:detail', pk=pk)
 
 @login_required
 def package_search(request):

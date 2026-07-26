@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}المشتركون{% endblock %}
-{% block breadcrumb %}المشتركون{% endblock %}
+{% block title %}المشتركين{% endblock %}
+{% block breadcrumb %}المشتركين{% endblock %}
 
 {% block content %}
 <div class="mlist-page">
     <div class="page-header">
         <div>
-            <h4 class="page-heading">المشتركون</h4>
+            <h4 class="page-heading">المشتركين</h4>
             <p class="page-desc d-none d-md-block">إضافة مشترك مع اشتراكه، والتجديد والقبض من صفحة كل زبون</p>
         </div>
         <div class="page-actions d-none d-md-flex">
@@ -107,6 +107,9 @@
                 {% if sub %}
                 <div class="mlist-detail"><i class="bi bi-box"></i><span>{{ sub.package.name }} — حتى {{ sub.end_date }}{% if sub.auto_renew %} · تلقائي{% endif %}</span></div>
                 {% endif %}
+                {% if s.total_debt %}
+                <div class="mlist-detail"><i class="bi bi-exclamation-circle"></i><span class="mlist-amount is-danger">دين {{ s.total_debt }} {{ system_settings.currency_symbol }}</span></div>
+                {% endif %}
                 <div class="mlist-detail"><i class="bi bi-cash"></i><span>{{ s.monthly_price }} {{ system_settings.currency_symbol }}</span></div>
             </div>
             <div class="mlist-actions">
@@ -135,6 +138,7 @@
                         <th class="text-center">الهاتف</th>
                         <th>المنطقة</th>
                         <th>حالة الاشتراك</th>
+                        <th>إجمالي الدين</th>
                         <th>السعر</th>
                         <th>إجراءات</th>
                     </tr>
@@ -166,6 +170,13 @@
                                 {% endif %}
                             {% endwith %}
                         </td>
+                        <td>
+                            {% if s.total_debt %}
+                            <span class="text-danger fw-semibold">{{ s.total_debt }} {{ system_settings.currency_symbol }}</span>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
                         <td>{{ s.monthly_price }} {{ system_settings.currency_symbol }}</td>
                         <td>
                             <div class="btn-action-group">
@@ -189,7 +200,7 @@
     {% else %}
     <div class="mlist-empty">
         <i class="bi bi-people"></i>
-        <p>لا يوجد مشتركون</p>
+        <p>لا يوجد مشتركين</p>
         <a href="{% url 'subscribers:create' %}" class="btn btn-primary">أضف أول مشترك</a>
     </div>
     {% endif %}

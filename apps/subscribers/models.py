@@ -48,7 +48,7 @@ class Subscriber(models.Model):
 
     class Meta:
         verbose_name = 'مشترك'
-        verbose_name_plural = 'المشتركون'
+        verbose_name_plural = 'المشتركين'
         ordering = ['-created_at']
 
     def __str__(self):

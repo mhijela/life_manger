@@ -258,12 +258,6 @@ class HubPaymentForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={**FORM_CONTROL, 'rows': 2}),
     )
-    renew_subscription = forms.BooleanField(
-        label='تجديد الاشتراك مع القبض',
-        required=False,
-        initial=False,
-        widget=forms.CheckboxInput(attrs=FORM_CHECK),
-    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -313,27 +307,22 @@ class HubRenewForm(forms.Form):
         return cleaned
 
 
-class HubDebtSettleForm(forms.Form):
-    debt_id = forms.IntegerField(widget=forms.HiddenInput)
-    amount = forms.DecimalField(
-        label='المبلغ',
+class HubDebtCreateForm(forms.Form):
+    total_amount = forms.DecimalField(
+        label='مبلغ الدين',
         max_digits=12,
         decimal_places=2,
         min_value=0.01,
         widget=forms.NumberInput(attrs={**FORM_CONTROL, 'step': '0.01'}),
     )
-    payment_date = forms.DateField(
-        label='تاريخ الدفع',
+    due_date = forms.DateField(
+        label='تاريخ الاستحقاق',
         initial=timezone.now().date,
         widget=forms.DateInput(attrs={**FORM_CONTROL, 'type': 'date'}),
     )
-    method = forms.ModelChoiceField(
-        label='طريقة الدفع',
-        queryset=None,
-        widget=forms.Select(attrs=FORM_SELECT),
+    notes = forms.CharField(
+        label='ملاحظات',
+        required=False,
+        widget=forms.Textarea(attrs={**FORM_CONTROL, 'rows': 2}),
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        from apps.finance.models import PaymentMethod
-        self.fields['method'].queryset = PaymentMethod.objects.filter(is_active=True)

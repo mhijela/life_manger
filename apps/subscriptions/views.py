@@ -8,7 +8,7 @@ from .services import renew_subscription, expire_subscription, suspend_subscript
 
 @login_required
 def list_view(request):
-    # العمل اليومي صار من صفحة المشتركون — القائمة القديمة تُحوَّل تلقائياً
+    # العمل اليومي صار من صفحة المشتركين — القائمة القديمة تُحوَّل تلقائياً
     return redirect('subscribers:list')
 
 

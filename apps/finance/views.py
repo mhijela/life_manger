@@ -45,20 +45,24 @@ def payment_create(request):
             payment = form.save(commit=False)
             payment.created_by = request.user
             payment.save()
-            if form.cleaned_data.get('renew_subscription') and payment.subscriber:
-                sub = payment.subscriber.active_subscription
-                if sub:
-                    from apps.subscriptions.services import renew_subscription
-                    renew_subscription(sub, user=request.user)
-                else:
-                    from apps.subscriptions.models import Package
-                    from apps.subscriptions.services import create_subscription
-                    pkg = Package.objects.filter(is_active=True).first()
-                    if pkg:
-                        create_subscription(payment.subscriber, pkg, user=request.user)
             if payment.subscriber:
+                from .services import apply_payment_to_open_debts
+                applied = apply_payment_to_open_debts(
+                    payment.subscriber,
+                    payment.amount,
+                    payment.payment_date,
+                    payment.method,
+                )
                 payment.subscriber.update_status()
-            messages.success(request, 'تم تسجيل الدفعة.')
+                if applied:
+                    messages.success(
+                        request,
+                        f'تم تسجيل الدفعة وخصم {applied} من المديونية.',
+                    )
+                else:
+                    messages.success(request, 'تم تسجيل الدفعة.')
+            else:
+                messages.success(request, 'تم تسجيل الدفعة.')
             return redirect('finance:payments')
     else:
         form = PaymentForm()

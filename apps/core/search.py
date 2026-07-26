@@ -43,7 +43,7 @@ def global_search(query, limit_per_group=5):
             )
             for s in subscribers
         ]
-        groups.append({'key': 'subscribers', 'label': 'المشتركون', 'items': items})
+        groups.append({'key': 'subscribers', 'label': 'المشتركين', 'items': items})
         total += len(items)
 
     from apps.devices.models import Device

@@ -6,8 +6,6 @@ FS = {'class': 'form-select'}
 
 
 class PaymentForm(forms.ModelForm):
-    renew_subscription = forms.BooleanField(required=False, initial=False, label='تجديد الاشتراك تلقائياً')
-
     class Meta:
         model = Payment
         fields = ['subscriber', 'amount', 'payment_date', 'method', 'description']

@@ -13,8 +13,8 @@ from .exporters import export_to_excel, export_to_pdf
 
 REPORT_TYPES = {
     'subscribers': 'تقرير المشتركين',
-    'active_subscribers': 'المشتركون النشطون',
-    'expired_subscribers': 'المشتركون المنتهون',
+    'active_subscribers': 'المشتركين النشطين',
+    'expired_subscribers': 'المشتركين المنتهين',
     'debts': 'تقرير الديون',
     'income': 'تقرير الدخل',
     'expenses': 'تقرير المصروفات',

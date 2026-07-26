@@ -1,6 +1,45 @@
+from decimal import Decimal
+
+from django.db import transaction
+
 from apps.messages.models import MessageTemplate
 from apps.messages.services.sms_service import SMSService
 from apps.settings_app.models import SystemSettings
+from .models import DebtPayment
+
+
+def apply_payment_to_open_debts(subscriber, amount, payment_date, method):
+    """
+    خصم مبلغ القبض من الديون المفتوحة (الأقدم استحقاقاً أولاً).
+    لا يُستخدم مع دفعات تجديد الاشتراك.
+    يعيد إجمالي المبلغ الذي خُصم من المديونية.
+    """
+    remaining = Decimal(str(amount))
+    if remaining <= 0 or not subscriber:
+        return Decimal('0')
+
+    applied = Decimal('0')
+    debts = list(
+        subscriber.debts.exclude(status='paid').order_by('due_date', 'pk')
+    )
+    with transaction.atomic():
+        for debt in debts:
+            if remaining <= 0:
+                break
+            portion = min(remaining, Decimal(str(debt.remaining_amount)))
+            if portion <= 0:
+                continue
+            DebtPayment.objects.create(
+                debt=debt,
+                amount=portion,
+                payment_date=payment_date,
+                method=method,
+            )
+            debt.paid_amount += portion
+            debt.update_status()
+            remaining -= portion
+            applied += portion
+    return applied
 
 
 def get_debt_sms_template():

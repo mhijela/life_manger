@@ -183,15 +183,15 @@ class DebtPaymentPersistenceTests(TestCase):
         self.assertEqual(self.debt.paid_amount, Decimal('150.00'))
         self.assertEqual(self.debt.status, 'paid')
 
-    def test_hub_settle_marks_paid_and_creates_payment(self):
+    def test_hub_pay_applies_to_open_debt(self):
         self.client.force_login(self.user)
         r = self.client.post(
-            reverse('subscribers:hub_settle_debt', args=[self.subscriber.pk]),
+            reverse('subscribers:hub_pay', args=[self.subscriber.pk]),
             {
-                'debt_id': self.debt.pk,
                 'amount': '150.00',
                 'payment_date': date.today().isoformat(),
                 'method': self.method.pk,
+                'description': 'قبض يخصم من الدين',
             },
         )
         self.assertEqual(r.status_code, 302)
