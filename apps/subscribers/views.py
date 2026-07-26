@@ -61,6 +61,40 @@ def _hub_redirect(request, pk):
     return redirect('subscribers:detail', pk=pk)
 
 
+SUBSCRIBER_SORT_FIELDS = {
+    'name': 'full_name',
+    'phone': 'phone',
+    'area': 'area__name',
+    'subscription': 'latest_subscription_end_date',
+    'debt': 'total_debt',
+    'price': 'monthly_price',
+}
+SUBSCRIBER_SORT_DEFAULT_DIR = {
+    'name': 'asc',
+    'phone': 'asc',
+    'area': 'asc',
+    'subscription': 'asc',  # أقرب تاريخ انتهاء أولاً
+    'debt': 'desc',         # أعلى دين أولاً
+    'price': 'desc',
+}
+
+
+def _apply_subscriber_sort(queryset, sort, direction):
+    if sort not in SUBSCRIBER_SORT_FIELDS:
+        sort = 'name'
+    if direction not in ('asc', 'desc'):
+        direction = SUBSCRIBER_SORT_DEFAULT_DIR.get(sort, 'asc')
+
+    field = SUBSCRIBER_SORT_FIELDS[sort]
+    if sort == 'subscription':
+        expr = F(field)
+        ordered = expr.asc(nulls_last=True) if direction == 'asc' else expr.desc(nulls_last=True)
+        return queryset.order_by(ordered, 'full_name', 'pk'), sort, direction
+
+    order = field if direction == 'asc' else f'-{field}'
+    return queryset.order_by(order, 'full_name', 'pk'), sort, direction
+
+
 @login_required
 def list_view(request):
     latest_subscription = Subscription.objects.filter(
@@ -88,6 +122,8 @@ def list_view(request):
     subscription_state = request.GET.get('subscription_state', '')
     search = request.GET.get('q', '')
     area_id = request.GET.get('area', '')
+    sort = request.GET.get('sort', 'name')
+    direction = request.GET.get('dir', '')
     per_page_options = (10, 20, 50, 100)
     requested_per_page = request.GET.get('per_page')
     if requested_per_page and requested_per_page.isdigit():
@@ -136,8 +172,15 @@ def list_view(request):
             Q(ip_address__icontains=search) | Q(mac_address__icontains=search)
         )
 
+    queryset, sort, direction = _apply_subscriber_sort(queryset, sort, direction)
     page_obj = paginate_queryset(request, queryset, per_page=per_page)
     payment_methods = PaymentMethod.objects.filter(is_active=True)
+    sort_next_dirs = {
+        key: ('desc' if sort == key and direction == 'asc' else
+              'asc' if sort == key and direction == 'desc' else
+              SUBSCRIBER_SORT_DEFAULT_DIR[key])
+        for key in SUBSCRIBER_SORT_FIELDS
+    }
     return render(request, 'subscribers/list.html', {
         'page_obj': page_obj,
         'subscription_state_choices': [
@@ -164,6 +207,9 @@ def list_view(request):
         'renew_form': HubRenewForm(),
         'add_debt_form': HubDebtCreateForm(initial={'due_date': today}),
         'list_next': request.get_full_path(),
+        'current_sort': sort,
+        'current_dir': direction,
+        'sort_next_dirs': sort_next_dirs,
     })
 
 

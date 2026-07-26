@@ -37,6 +37,8 @@
 
     <div class="filter-bar mlist-filter">
         <form method="get">
+            <input type="hidden" name="sort" value="{{ current_sort }}">
+            <input type="hidden" name="dir" value="{{ current_dir }}">
             <div class="mlist-filter-primary">
                 <div class="mlist-search">
                     <i class="bi bi-search"></i>
@@ -161,12 +163,50 @@
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th>الاسم</th>
-                        <th class="text-center">الهاتف</th>
-                        <th>المنطقة</th>
-                        <th>حالة الاشتراك</th>
-                        <th>إجمالي الدين</th>
-                        <th>السعر</th>
+                        <th>
+                            <a class="th-sort{% if current_sort == 'name' %} is-active{% endif %}"
+                               href="?sort=name&dir={{ sort_next_dirs.name }}&q={{ search|urlencode }}&subscription_state={{ current_subscription_state|urlencode }}&area={{ current_area|urlencode }}&per_page={{ per_page }}">
+                                الاسم
+                                {% if current_sort == 'name' %}<i class="bi bi-caret-{% if current_dir == 'asc' %}up{% else %}down{% endif %}-fill"></i>{% else %}<i class="bi bi-arrow-down-up"></i>{% endif %}
+                            </a>
+                        </th>
+                        <th class="text-center">
+                            <a class="th-sort{% if current_sort == 'phone' %} is-active{% endif %}"
+                               href="?sort=phone&dir={{ sort_next_dirs.phone }}&q={{ search|urlencode }}&subscription_state={{ current_subscription_state|urlencode }}&area={{ current_area|urlencode }}&per_page={{ per_page }}">
+                                الهاتف
+                                {% if current_sort == 'phone' %}<i class="bi bi-caret-{% if current_dir == 'asc' %}up{% else %}down{% endif %}-fill"></i>{% else %}<i class="bi bi-arrow-down-up"></i>{% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a class="th-sort{% if current_sort == 'area' %} is-active{% endif %}"
+                               href="?sort=area&dir={{ sort_next_dirs.area }}&q={{ search|urlencode }}&subscription_state={{ current_subscription_state|urlencode }}&area={{ current_area|urlencode }}&per_page={{ per_page }}">
+                                المنطقة
+                                {% if current_sort == 'area' %}<i class="bi bi-caret-{% if current_dir == 'asc' %}up{% else %}down{% endif %}-fill"></i>{% else %}<i class="bi bi-arrow-down-up"></i>{% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a class="th-sort{% if current_sort == 'subscription' %} is-active{% endif %}"
+                               href="?sort=subscription&dir={{ sort_next_dirs.subscription }}&q={{ search|urlencode }}&subscription_state={{ current_subscription_state|urlencode }}&area={{ current_area|urlencode }}&per_page={{ per_page }}"
+                               title="ترتيب حسب تاريخ انتهاء الاشتراك">
+                                حالة الاشتراك
+                                {% if current_sort == 'subscription' %}<i class="bi bi-caret-{% if current_dir == 'asc' %}up{% else %}down{% endif %}-fill"></i>{% else %}<i class="bi bi-arrow-down-up"></i>{% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a class="th-sort{% if current_sort == 'debt' %} is-active{% endif %}"
+                               href="?sort=debt&dir={{ sort_next_dirs.debt }}&q={{ search|urlencode }}&subscription_state={{ current_subscription_state|urlencode }}&area={{ current_area|urlencode }}&per_page={{ per_page }}"
+                               title="ترتيب حسب إجمالي الدين">
+                                إجمالي الدين
+                                {% if current_sort == 'debt' %}<i class="bi bi-caret-{% if current_dir == 'asc' %}up{% else %}down{% endif %}-fill"></i>{% else %}<i class="bi bi-arrow-down-up"></i>{% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a class="th-sort{% if current_sort == 'price' %} is-active{% endif %}"
+                               href="?sort=price&dir={{ sort_next_dirs.price }}&q={{ search|urlencode }}&subscription_state={{ current_subscription_state|urlencode }}&area={{ current_area|urlencode }}&per_page={{ per_page }}">
+                                السعر
+                                {% if current_sort == 'price' %}<i class="bi bi-caret-{% if current_dir == 'asc' %}up{% else %}down{% endif %}-fill"></i>{% else %}<i class="bi bi-arrow-down-up"></i>{% endif %}
+                            </a>
+                        </th>
                         <th>إجراءات</th>
                     </tr>
                 </thead>
@@ -268,11 +308,11 @@
     <nav class="mlist-pagination">
         <ul class="pagination justify-content-center mb-0">
             {% if page_obj.has_previous %}
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search|default:'' }}&subscription_state={{ current_subscription_state|default:'' }}&area={{ current_area|default:'' }}&per_page={{ per_page }}">السابق</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search|urlencode }}&subscription_state={{ current_subscription_state|urlencode }}&area={{ current_area|urlencode }}&per_page={{ per_page }}&sort={{ current_sort }}&dir={{ current_dir }}">السابق</a></li>
             {% endif %}
             <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
             {% if page_obj.has_next %}
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search|default:'' }}&subscription_state={{ current_subscription_state|default:'' }}&area={{ current_area|default:'' }}&per_page={{ per_page }}">التالي</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search|urlencode }}&subscription_state={{ current_subscription_state|urlencode }}&area={{ current_area|urlencode }}&per_page={{ per_page }}&sort={{ current_sort }}&dir={{ current_dir }}">التالي</a></li>
             {% endif %}
         </ul>
     </nav>
