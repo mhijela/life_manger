@@ -28,7 +28,12 @@ from .forms import (
     HubRenewForm,
     HubDebtCreateForm,
 )
-from .services import get_expiry_reminder_template, send_expiry_reminder_sms
+from .services import (
+    get_active_sms_templates,
+    get_expiry_reminder_template,
+    send_subscriber_sms,
+)
+from apps.messages.models import MessageTemplate
 from apps.messages.services.sms_service import SMSService
 
 
@@ -153,6 +158,7 @@ def list_view(request):
         'today': today,
         'sms_configured': SMSService().is_configured(),
         'expiry_sms_template': get_expiry_reminder_template(),
+        'sms_templates': get_active_sms_templates(),
         'has_payment_methods': payment_methods.exists(),
         'pay_form': HubPaymentForm(),
         'renew_form': HubRenewForm(),
@@ -165,13 +171,22 @@ def list_view(request):
 @require_POST
 def send_reminder_sms(request, pk):
     subscriber = get_object_or_404(Subscriber, pk=pk)
-    log, error = send_expiry_reminder_sms(subscriber)
+    template = None
+    template_id = request.POST.get('template')
+    if template_id:
+        template = get_object_or_404(MessageTemplate, pk=template_id)
+
+    log, error = send_subscriber_sms(subscriber, template=template)
     if error:
         messages.error(request, error)
     elif log and log.status == 'sent':
-        messages.success(request, f'تم إرسال رسالة التذكير إلى {subscriber.full_name}.')
+        messages.success(request, f'تم إرسال الرسالة إلى {subscriber.full_name}.')
     else:
         messages.error(request, (log.error_message if log else None) or 'فشل إرسال الرسالة.')
+
+    next_url = (request.POST.get('next') or '').strip()
+    if next_url.startswith('/') and not next_url.startswith('//'):
+        return redirect(next_url)
     return redirect('subscribers:list')
 
 

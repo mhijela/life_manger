@@ -26,11 +26,12 @@
         <a href="{% url 'settings_app:index' %}?tab=sms">أكمل الإعدادات</a>
         ليصبح زر التذكير متاحاً.
     </div>
-    {% elif not expiry_sms_template %}
+    {% elif not sms_templates %}
     <div class="alert alert-warning mb-3">
         <i class="bi bi-exclamation-triangle"></i>
-        لا يوجد قالب نشط من نوع «تذكير انتهاء اشتراك» —
-        <a href="{% url 'messages:templates' %}">أضف قالباً من قوالب الرسائل</a>.
+        لا توجد قوالب رسائل نشطة —
+        <a href="{% url 'messages:templates' %}">أضف قالباً من قوالب الرسائل</a>
+        ليصبح زر الرسالة متاحاً.
     </div>
     {% endif %}
 
@@ -46,10 +47,10 @@
                 </button>
             </div>
             <div class="collapse d-md-block{% if current_subscription_state or current_area %} show{% endif %}" id="subscribersFilters">
-                <div class="row g-2 align-items-end mt-2">
+                <div class="row g-2 align-items-end mlist-filter-fields">
                     <div class="col-md-4">
-                        <label class="form-label mb-1">حالة الاشتراك</label>
-                        <select name="subscription_state" class="form-select">
+                        <label class="form-label mb-1 d-md-none">حالة الاشتراك</label>
+                        <select name="subscription_state" class="form-select" aria-label="حالة الاشتراك">
                             <option value="">كل الاشتراكات</option>
                             {% for val, label in subscription_state_choices %}
                             <option value="{{ val }}" {% if current_subscription_state == val %}selected{% endif %}>{{ label }}</option>
@@ -57,8 +58,8 @@
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label mb-1">المنطقة</label>
-                        <select name="area" class="form-select">
+                        <label class="form-label mb-1 d-md-none">المنطقة</label>
+                        <select name="area" class="form-select" aria-label="المنطقة">
                             <option value="">كل المناطق</option>
                             {% for area in areas %}
                             <option value="{{ area.pk }}" {% if current_area == area.pk|stringformat:"s" %}selected{% endif %}>{{ area.name }}</option>
@@ -66,8 +67,8 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label mb-1">عدد الأسطر</label>
-                        <select name="per_page" class="form-select" onchange="this.form.submit()">
+                        <label class="form-label mb-1 d-md-none">عدد الأسطر</label>
+                        <select name="per_page" class="form-select" aria-label="عدد الأسطر" onchange="this.form.submit()">
                             {% for value in per_page_options %}
                             <option value="{{ value }}" {% if per_page == value %}selected{% endif %}>{{ value }}</option>
                             {% endfor %}
@@ -96,16 +97,16 @@
                 {% elif sub.status == 'suspended' %}
                 <span class="mlist-status">موقوف</span>
                 {% elif sub.status == 'expired' or sub.end_date < today %}
-                <span class="mlist-status is-danger">منتهي</span>
+                <span class="mlist-status is-danger">منتهي في {{ sub.end_date }}</span>
                 {% elif sub.days_remaining <= 7 %}
-                <span class="mlist-status is-warning">ينتهي قريباً</span>
+                <span class="mlist-status is-warning">ساري حتى {{ sub.end_date }}</span>
                 {% else %}
-                <span class="mlist-status is-success">ساري</span>
+                <span class="mlist-status is-success">ساري حتى {{ sub.end_date }}</span>
                 {% endif %}
             </div>
             <div class="mlist-details">
                 {% if sub %}
-                <div class="mlist-detail"><i class="bi bi-box"></i><span>{{ sub.package.name }} — حتى {{ sub.end_date }}{% if sub.auto_renew %} · تلقائي{% endif %}</span></div>
+                <div class="mlist-detail"><i class="bi bi-box"></i><span>{{ sub.package.name }}{% if sub.auto_renew %} · تجديد تلقائي{% endif %}</span></div>
                 {% endif %}
                 {% if s.total_debt %}
                 <div class="mlist-detail"><i class="bi bi-exclamation-circle"></i><span class="mlist-amount is-danger">دين {{ s.total_debt }} {{ system_settings.currency_symbol }}</span></div>
@@ -113,44 +114,42 @@
                 <div class="mlist-detail"><i class="bi bi-cash"></i><span>{{ s.monthly_price }} {{ system_settings.currency_symbol }}</span></div>
             </div>
             <div class="mlist-actions">
-                <button type="button" class="btn btn-success btn-hub-pay"
-                        title="قبض"
+                <button type="button" class="btn btn-action btn-action-pay"
                         data-bs-toggle="modal" data-bs-target="#listPayModal"
                         data-url="{% url 'subscribers:hub_pay' s.pk %}"
                         data-name="{{ s.full_name }}"
                         data-amount="{{ s.monthly_price }}"
                         data-debt="{{ s.total_debt|default_if_none:0 }}"
                         {% if not has_payment_methods %}disabled{% endif %}>
-                    <i class="bi bi-cash-coin"></i>
+                    <i class="bi bi-cash-coin"></i> قبض
                 </button>
-                <button type="button" class="btn btn-primary btn-hub-renew"
-                        title="تجديد"
+                <button type="button" class="btn btn-action btn-action-renew"
                         data-bs-toggle="modal" data-bs-target="#listRenewModal"
                         data-url="{% url 'subscribers:hub_renew' s.pk %}"
                         data-name="{{ s.full_name }}"
                         data-package-id="{% if sub %}{{ sub.package_id }}{% endif %}"
                         data-end-date="{% if sub %}{{ sub.end_date }}{% endif %}"
                         {% if not sub %}disabled{% endif %}>
-                    <i class="bi bi-arrow-repeat"></i>
+                    <i class="bi bi-arrow-repeat"></i> تجديد
                 </button>
-                <button type="button" class="btn btn-outline-danger btn-hub-debt"
-                        title="دين"
+                <button type="button" class="btn btn-action btn-action-debt"
                         data-bs-toggle="modal" data-bs-target="#listDebtModal"
                         data-url="{% url 'subscribers:hub_add_debt' s.pk %}"
                         data-name="{{ s.full_name }}"
                         data-amount="{{ s.monthly_price }}">
-                    <i class="bi bi-plus-circle"></i>
+                    <i class="bi bi-plus-circle"></i> دين
                 </button>
-                <button type="button" class="btn btn-outline-primary btn-reminder-sms"
-                        title="إرسال تذكير"
+                <button type="button" class="btn btn-action btn-action-sms"
+                        data-bs-toggle="modal" data-bs-target="#listSmsModal"
                         data-url="{% url 'subscribers:send_reminder_sms' s.pk %}"
                         data-name="{{ s.full_name }}"
-                        {% if not sms_configured or not expiry_sms_template or not s.phone %}disabled{% endif %}>
-                    <i class="bi bi-chat-dots"></i>
+                        data-phone="{{ s.phone }}"
+                        {% if not sms_configured or not sms_templates or not s.phone %}disabled{% endif %}>
+                    <i class="bi bi-chat-dots"></i> رسالة
                 </button>
-                <a href="{% url 'subscribers:detail' s.pk %}" class="btn btn-outline-secondary" title="عرض"><i class="bi bi-eye"></i></a>
-                <a href="{% url 'subscribers:edit' s.pk %}" class="btn btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
-                <button type="button" class="btn btn-outline-danger" title="حذف" onclick="confirmDelete('{% url 'subscribers:delete' s.pk %}')"><i class="bi bi-trash3"></i></button>
+                <a href="{% url 'subscribers:detail' s.pk %}" class="btn btn-action btn-action-view"><i class="bi bi-eye"></i> عرض</a>
+                <a href="{% url 'subscribers:edit' s.pk %}" class="btn btn-action btn-action-edit"><i class="bi bi-pencil"></i> تعديل</a>
+                <button type="button" class="btn btn-action btn-action-delete" onclick="confirmDelete('{% url 'subscribers:delete' s.pk %}')"><i class="bi bi-trash3"></i> حذف</button>
             </div>
         </article>
         {% endwith %}
@@ -184,15 +183,15 @@
                                 {% elif sub.status == 'suspended' %}
                                 <span class="badge bg-secondary">موقوف</span>
                                 {% elif sub.status == 'expired' or sub.end_date < today %}
-                                <span class="badge bg-danger">منتهي</span>
+                                <span class="badge bg-danger">منتهي في {{ sub.end_date }}</span>
                                 {% elif sub.days_remaining <= 7 %}
-                                <span class="badge bg-warning">ينتهي قريباً</span>
+                                <span class="badge bg-warning">ساري حتى {{ sub.end_date }}</span>
                                 {% else %}
-                                <span class="badge bg-success">ساري</span>
+                                <span class="badge bg-success">ساري حتى {{ sub.end_date }}</span>
                                 {% endif %}
                                 {% if sub %}
                                 <div class="small text-muted mt-1">
-                                    {{ sub.package.name }} — حتى {{ sub.end_date }}
+                                    {{ sub.package.name }}
                                     {% if sub.auto_renew %}<i class="bi bi-arrow-repeat text-success" title="تجديد تلقائي"></i>{% endif %}
                                 </div>
                                 {% endif %}
@@ -209,43 +208,45 @@
                         <td>
                             {% with sub=s.subscription_list.0 %}
                             <div class="btn-action-group">
-                                <button type="button" class="btn btn-sm btn-success btn-hub-pay"
-                                        title="قبض"
+                                <button type="button" class="btn btn-sm btn-action btn-action-pay"
                                         data-bs-toggle="modal" data-bs-target="#listPayModal"
                                         data-url="{% url 'subscribers:hub_pay' s.pk %}"
                                         data-name="{{ s.full_name }}"
                                         data-amount="{{ s.monthly_price }}"
                                         data-debt="{{ s.total_debt|default_if_none:0 }}"
                                         {% if not has_payment_methods %}disabled{% endif %}>
-                                    <i class="bi bi-cash-coin"></i>
+                                    <i class="bi bi-cash-coin"></i> قبض
                                 </button>
-                                <button type="button" class="btn btn-sm btn-primary btn-hub-renew"
-                                        title="تجديد"
+                                <button type="button" class="btn btn-sm btn-action btn-action-renew"
                                         data-bs-toggle="modal" data-bs-target="#listRenewModal"
                                         data-url="{% url 'subscribers:hub_renew' s.pk %}"
                                         data-name="{{ s.full_name }}"
                                         data-package-id="{% if sub %}{{ sub.package_id }}{% endif %}"
                                         data-end-date="{% if sub %}{{ sub.end_date }}{% endif %}"
                                         {% if not sub %}disabled{% endif %}>
-                                    <i class="bi bi-arrow-repeat"></i>
+                                    <i class="bi bi-arrow-repeat"></i> تجديد
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger btn-hub-debt"
-                                        title="دين"
+                                <button type="button" class="btn btn-sm btn-action btn-action-debt"
                                         data-bs-toggle="modal" data-bs-target="#listDebtModal"
                                         data-url="{% url 'subscribers:hub_add_debt' s.pk %}"
                                         data-name="{{ s.full_name }}"
                                         data-amount="{{ s.monthly_price }}">
-                                    <i class="bi bi-plus-circle"></i>
+                                    <i class="bi bi-plus-circle"></i> دين
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-primary btn-reminder-sms"
-                                        title="إرسال تذكير اشتراك"
+                                <button type="button" class="btn btn-sm btn-action btn-action-sms"
+                                        data-bs-toggle="modal" data-bs-target="#listSmsModal"
                                         data-url="{% url 'subscribers:send_reminder_sms' s.pk %}"
                                         data-name="{{ s.full_name }}"
-                                        {% if not sms_configured or not expiry_sms_template or not s.phone %}disabled{% endif %}>
-                                    <i class="bi bi-chat-dots"></i>
+                                        data-phone="{{ s.phone }}"
+                                        {% if not sms_configured or not sms_templates or not s.phone %}disabled{% endif %}>
+                                    <i class="bi bi-chat-dots"></i> رسالة
                                 </button>
-                                <a href="{% url 'subscribers:edit' s.pk %}" class="btn btn-sm btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
-                                <button class="btn btn-sm btn-outline-danger" title="حذف" onclick="confirmDelete('{% url 'subscribers:delete' s.pk %}')"><i class="bi bi-trash3"></i></button>
+                                <a href="{% url 'subscribers:edit' s.pk %}" class="btn btn-sm btn-action btn-action-edit">
+                                    <i class="bi bi-pencil"></i> تعديل
+                                </a>
+                                <button type="button" class="btn btn-sm btn-action btn-action-delete" onclick="confirmDelete('{% url 'subscribers:delete' s.pk %}')">
+                                    <i class="bi bi-trash3"></i> حذف
+                                </button>
                             </div>
                             {% endwith %}
                         </td>
@@ -280,7 +281,50 @@
     <a href="{% url 'subscribers:create' %}" class="mlist-fab d-md-none" aria-label="إضافة مشترك"><i class="bi bi-person-plus"></i></a>
 </div>
 
-<form method="post" id="singleSmsForm" style="display:none">{% csrf_token %}</form>
+{# ── Modal: إرسال رسالة ── #}
+<div class="modal fade" id="listSmsModal" tabindex="-1" aria-labelledby="listSmsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="" class="modal-content" id="listSmsForm">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ list_next }}">
+            <div class="modal-header">
+                <h5 class="modal-title" id="listSmsModalLabel">إرسال رسالة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body">
+                {% if not sms_templates %}
+                <div class="alert alert-warning mb-0">
+                    لا توجد قوالب رسائل نشطة.
+                    <a href="{% url 'messages:templates' %}">أضف قالباً من قوالب الرسائل</a>
+                </div>
+                {% else %}
+                <p class="small text-muted mb-3" id="listSmsRecipient"></p>
+                <div class="mb-3">
+                    <label class="form-label" for="listSmsTemplate">القالب</label>
+                    <select name="template" id="listSmsTemplate" class="form-select" required>
+                        {% for t in sms_templates %}
+                        <option value="{{ t.pk }}" data-body="{{ t.body }}"
+                                {% if expiry_sms_template and t.pk == expiry_sms_template.pk %}selected{% endif %}>
+                            {{ t.name }} — {{ t.get_template_type_display }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-0">
+                    <label class="form-label">معاينة نص القالب</label>
+                    <div class="border rounded p-2 small text-muted" id="listSmsPreview" style="white-space: pre-wrap; min-height: 3rem;"></div>
+                </div>
+                {% endif %}
+            </div>
+            {% if sms_templates %}
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> إرسال</button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
 
 {# ── Modal: قبض ── #}
 <div class="modal fade" id="listPayModal" tabindex="-1" aria-labelledby="listPayModalLabel" aria-hidden="true">
@@ -405,20 +449,33 @@
 {% block extra_js %}
 <script>
 (function () {
-    document.querySelectorAll('.btn-reminder-sms').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const msg = `إرسال رسالة تذكير اشتراك إلى ${btn.dataset.name}؟`;
-            if (!confirm(msg)) return;
-            const smsForm = document.getElementById('singleSmsForm');
-            smsForm.action = btn.dataset.url;
-            smsForm.submit();
-        });
-    });
-
     var currency = '{{ system_settings.currency_symbol|escapejs }}';
     var payModal = document.getElementById('listPayModal');
     var renewModal = document.getElementById('listRenewModal');
     var debtModal = document.getElementById('listDebtModal');
+    var smsModal = document.getElementById('listSmsModal');
+
+    var smsSelect = document.getElementById('listSmsTemplate');
+    var smsPreview = document.getElementById('listSmsPreview');
+    function updateSmsPreview() {
+        if (!smsSelect || !smsPreview) return;
+        var opt = smsSelect.options[smsSelect.selectedIndex];
+        smsPreview.textContent = opt ? (opt.dataset.body || '') : '';
+    }
+    if (smsSelect) smsSelect.addEventListener('change', updateSmsPreview);
+
+    if (smsModal) {
+        smsModal.addEventListener('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            if (!btn) return;
+            var form = document.getElementById('listSmsForm');
+            form.action = btn.dataset.url || '';
+            document.getElementById('listSmsModalLabel').textContent = 'إرسال رسالة — ' + (btn.dataset.name || '');
+            var recipient = document.getElementById('listSmsRecipient');
+            if (recipient) recipient.textContent = 'إلى الرقم: ' + (btn.dataset.phone || '');
+            updateSmsPreview();
+        });
+    }
 
     if (payModal) {
         payModal.addEventListener('show.bs.modal', function (event) {
