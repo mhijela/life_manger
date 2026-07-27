@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block auth_content %}
 <div class="login-page">
     <div class="login-visual d-none d-lg-flex">
@@ -15,9 +16,14 @@
     </div>
     <div class="login-form-panel">
         <div class="login-card">
-            <div class="login-logo"><i class="bi bi-wifi"></i></div>
+            <div class="login-logo login-logo-img">
+                <img src="{% static 'img/landing/logo.png' %}" alt="زيد تك" width="72" height="72">
+            </div>
             <h4>مرحباً بك</h4>
             <p class="login-subtitle">سجّل دخولك للوصول إلى لوحة التحكم</p>
+            <p class="login-subtitle mb-3">
+                <a href="{% url 'website:index' %}" class="text-decoration-none">← العودة إلى موقع زيد تك</a>
+            </p>
             <form method="post">
                 {% csrf_token %}
                 {% if form.non_field_errors %}

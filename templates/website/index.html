@@ -1,0 +1,296 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site.brand_ar }} | {{ site.tagline }}</title>
+    <meta name="description" content="زيد تك للخدمات الرقمية وتكنولوجيا المعلومات — حلول المواقع، الشبكات، السحابة، الأمن السيبراني والدعم الفني للأفراد والشركات.">
+    <meta name="theme-color" content="#071428">
+    <link rel="icon" type="image/png" href="{% static 'img/landing/logo.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/landing/logo.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{% static 'css/landing.css' %}" rel="stylesheet">
+</head>
+<body class="zt-body">
+    <a class="zt-skip" href="#main">تخطي إلى المحتوى</a>
+
+    <header class="zt-nav" id="siteNav">
+        <div class="zt-container zt-nav-inner">
+            <a class="zt-brand" href="#top" aria-label="زيد تك — الصفحة الرئيسية">
+                <img class="zt-brand-logo" src="{% static 'img/landing/logo.png' %}" alt="" width="48" height="48" decoding="async">
+                <span class="zt-brand-text">
+                    <strong>{{ site.brand_ar }}</strong>
+                    <small>{{ site.brand_en }}</small>
+                </span>
+            </a>
+            <button class="zt-nav-toggle" type="button" aria-expanded="false" aria-controls="ztNavLinks" id="navToggle">
+                <i class="bi bi-list" aria-hidden="true"></i>
+                <span class="visually-hidden">القائمة</span>
+            </button>
+            <nav class="zt-nav-links" id="ztNavLinks" aria-label="التنقل الرئيسي">
+                <a href="#top">الرئيسية</a>
+                <a href="#about">من نحن</a>
+                <a href="#services">خدماتنا</a>
+                <a href="#work">أعمالنا</a>
+                <a href="#why">لماذا زيد تك</a>
+                <a href="#contact">تواصل معنا</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main">
+        <section class="zt-hero" id="top">
+            <div class="zt-hero-glow" aria-hidden="true"></div>
+            <div class="zt-container zt-hero-grid">
+                <div class="zt-hero-copy">
+                    <p class="zt-kicker">{{ site.brand_ar }} · {{ site.tagline }}</p>
+                    <h1>حلول رقمية متطورة لأعمال أكثر نجاحًا</h1>
+                    <p class="zt-lead">
+                        في زيد تك، نوفر حلول تكنولوجيا المعلومات والشبكات والخدمات الرقمية
+                        التي تساعد الأفراد والشركات على التطور والعمل بكفاءة واستقرار.
+                    </p>
+                    <div class="zt-hero-actions">
+                        <a class="zt-btn zt-btn-primary" href="#services">اكتشف خدماتنا</a>
+                        <a class="zt-btn zt-btn-ghost" href="#contact">تواصل معنا</a>
+                    </div>
+                </div>
+                <div class="zt-hero-visual">
+                    <img
+                        src="{% static 'img/landing/hero.png' %}"
+                        alt="تصور تقني لشبكات وحوسبة سحابية وأمن رقمي بألوان كحلية وزرقاء"
+                        width="1280"
+                        height="720"
+                        decoding="async"
+                        fetchpriority="high"
+                    >
+                </div>
+            </div>
+        </section>
+
+        <section class="zt-section" id="services">
+            <div class="zt-container">
+                <header class="zt-section-head reveal">
+                    <p class="zt-kicker">خدماتنا</p>
+                    <h2>حلول تقنية متكاملة من الفكرة إلى التشغيل</h2>
+                    <p>ثمانية مسارات واضحة تغطي حضورك الرقمي، بنيتك التحتية، وأمان عملك.</p>
+                </header>
+                <div class="zt-services-grid">
+                    {% for s in services %}
+                    <article class="zt-card zt-service-card reveal">
+                        <div class="zt-service-icon" aria-hidden="true"><i class="bi {{ s.icon }}"></i></div>
+                        <h3>{{ s.title }}</h3>
+                        <p>{{ s.desc }}</p>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section class="zt-section zt-about" id="about">
+            <div class="zt-container zt-about-grid">
+                <div class="zt-about-copy reveal">
+                    <p class="zt-kicker">من نحن</p>
+                    <h2>التقنية التي تقرّبك من المستقبل</h2>
+                    <p>
+                        زيد تك شركة متخصصة في تقديم الخدمات الرقمية وحلول تكنولوجيا المعلومات،
+                        نعمل على تحويل احتياجات عملائنا إلى حلول عملية، آمنة وقابلة للتطور،
+                        مع الالتزام بالجودة وسرعة الإنجاز والدعم المستمر.
+                    </p>
+                </div>
+                <div class="zt-stats reveal">
+                    <div class="zt-stat">
+                        <strong data-count="120" data-suffix="+">0</strong>
+                        <span>حلول تقنية متكاملة</span>
+                    </div>
+                    <div class="zt-stat">
+                        <strong data-count="24" data-suffix="/7">0</strong>
+                        <span>دعم فني مستمر</span>
+                    </div>
+                    <div class="zt-stat">
+                        <strong data-count="48" data-suffix="س">0</strong>
+                        <span>سرعة في التنفيذ</span>
+                    </div>
+                    <div class="zt-stat">
+                        <strong data-count="98" data-suffix="%">0</strong>
+                        <span>رضا العملاء أولويتنا</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="zt-section" id="why">
+            <div class="zt-container">
+                <header class="zt-section-head reveal">
+                    <p class="zt-kicker">لماذا زيد تك</p>
+                    <h2>شراكة تقنية تعتمد عليها</h2>
+                    <p>نركز على الوضوح، الجودة، والأمان في كل مرحلة من المشروع.</p>
+                </header>
+                <div class="zt-why-grid">
+                    {% for item in why_us %}
+                    <article class="zt-card zt-why-card reveal">
+                        <i class="bi {{ item.icon }}" aria-hidden="true"></i>
+                        <h3>{{ item.title }}</h3>
+                        <p>{{ item.desc }}</p>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section class="zt-section" id="work">
+            <div class="zt-container">
+                <header class="zt-section-head reveal">
+                    <p class="zt-kicker">أعمالنا</p>
+                    <h2>نماذج من حلول نفّذناها</h2>
+                    <p>معرض مشاريع يعكس تنوع عملنا بين الويب، الأنظمة، الشبكات، والتطبيقات.</p>
+                </header>
+                <div class="zt-work-grid">
+                    {% for p in projects %}
+                    <article class="zt-card zt-work-card reveal tone-{{ p.tone }}">
+                        <div class="zt-device" aria-hidden="true">
+                            <div class="zt-device-screen">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                        <div class="zt-work-body">
+                            <span class="zt-chip">{{ p.category }}</span>
+                            <h3>{{ p.title }}</h3>
+                            <p>{{ p.desc }}</p>
+                            <a class="zt-link" href="#contact">عرض المشروع <i class="bi bi-arrow-left"></i></a>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section class="zt-cta reveal" id="cta">
+            <div class="zt-cta-bg" aria-hidden="true">
+                <img src="{% static 'img/landing/cta.png' %}" alt="" width="1600" height="900" loading="lazy" decoding="async">
+            </div>
+            <div class="zt-container zt-cta-inner">
+                <h2>هل لديك فكرة أو مشروع؟ دعنا نحوّلها إلى حل رقمي ناجح</h2>
+                <a class="zt-btn zt-btn-primary" href="#contact">ابدأ مشروعك معنا</a>
+            </div>
+        </section>
+
+        <section class="zt-section" id="contact">
+            <div class="zt-container zt-contact-grid">
+                <div class="zt-contact-info reveal">
+                    <p class="zt-kicker">تواصل معنا</p>
+                    <h2>لنبدأ الحديث عن مشروعك</h2>
+                    <p>أرسل طلبك أو تواصل مباشرة عبر واتساب، الهاتف، أو البريد.</p>
+                    <div class="zt-contact-actions">
+                        <a class="zt-btn zt-btn-whatsapp" href="{{ whatsapp_url }}" target="_blank" rel="noopener">
+                            <i class="bi bi-whatsapp"></i> واتساب
+                        </a>
+                        <a class="zt-btn zt-btn-ghost" href="{{ tel_url }}"><i class="bi bi-telephone"></i> {{ site.phone_display }}</a>
+                        <a class="zt-btn zt-btn-ghost" href="{{ mailto_url }}"><i class="bi bi-envelope"></i> {{ site.email }}</a>
+                    </div>
+                    <ul class="zt-meta-list">
+                        <li><i class="bi bi-geo-alt"></i> {{ site.address }}</li>
+                        <li><i class="bi bi-clock"></i> {{ site.hours }}</li>
+                    </ul>
+                    {% if site.show_social %}
+                    <div class="zt-social">
+                        {% if site.facebook %}<a href="{{ site.facebook }}" aria-label="فيسبوك"><i class="bi bi-facebook"></i></a>{% endif %}
+                        {% if site.instagram %}<a href="{{ site.instagram }}" aria-label="إنستغرام"><i class="bi bi-instagram"></i></a>{% endif %}
+                        {% if site.linkedin %}<a href="{{ site.linkedin }}" aria-label="لينكدإن"><i class="bi bi-linkedin"></i></a>{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="zt-card zt-form-card reveal">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="zt-alert {% if message.tags %}zt-alert-{{ message.tags }}{% endif %}" role="status">{{ message }}</div>
+                    {% endfor %}
+                    {% endif %}
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="zt-field">
+                            <label for="{{ contact_form.name.id_for_label }}">{{ contact_form.name.label }}</label>
+                            {{ contact_form.name }}
+                            {{ contact_form.name.errors }}
+                        </div>
+                        <div class="zt-field-row">
+                            <div class="zt-field">
+                                <label for="{{ contact_form.phone.id_for_label }}">{{ contact_form.phone.label }}</label>
+                                {{ contact_form.phone }}
+                                {{ contact_form.phone.errors }}
+                            </div>
+                            <div class="zt-field">
+                                <label for="{{ contact_form.email.id_for_label }}">{{ contact_form.email.label }}</label>
+                                {{ contact_form.email }}
+                                {{ contact_form.email.errors }}
+                            </div>
+                        </div>
+                        <div class="zt-field">
+                            <label for="{{ contact_form.service.id_for_label }}">{{ contact_form.service.label }}</label>
+                            {{ contact_form.service }}
+                            {{ contact_form.service.errors }}
+                        </div>
+                        <div class="zt-field">
+                            <label for="{{ contact_form.message.id_for_label }}">{{ contact_form.message.label }}</label>
+                            {{ contact_form.message }}
+                            {{ contact_form.message.errors }}
+                        </div>
+                        <button class="zt-btn zt-btn-primary zt-btn-block" type="submit">إرسال الطلب</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="zt-footer">
+        <div class="zt-container zt-footer-grid">
+            <div>
+                <div class="zt-brand zt-brand-footer">
+                    <img class="zt-brand-logo" src="{% static 'img/landing/logo.png' %}" alt="" width="52" height="52" loading="lazy" decoding="async">
+                    <span class="zt-brand-text">
+                        <strong>{{ site.brand_ar }}</strong>
+                        <small>{{ site.tagline }}</small>
+                    </span>
+                </div>
+                <p>حلول رقمية وشبكات وتقنية معلومات تساعد أعمالك على النمو بثقة.</p>
+            </div>
+            <div>
+                <h3>روابط سريعة</h3>
+                <a href="#about">من نحن</a>
+                <a href="#services">خدماتنا</a>
+                <a href="#work">أعمالنا</a>
+                <a href="#contact">تواصل معنا</a>
+            </div>
+            <div>
+                <h3>الخدمات</h3>
+                <a href="#services">تطوير المواقع</a>
+                <a href="#services">الشبكات والسحابة</a>
+                <a href="#services">الأمن السيبراني</a>
+                <a href="#services">الدعم الفني</a>
+            </div>
+            <div>
+                <h3>التواصل</h3>
+                <a href="{{ tel_url }}">{{ site.phone_display }}</a>
+                <a href="{{ mailto_url }}">{{ site.email }}</a>
+                <span>{{ site.address }}</span>
+                <span>{{ site.hours }}</span>
+            </div>
+        </div>
+        <div class="zt-footer-copy">
+            <div class="zt-container">
+                جميع الحقوق محفوظة لشركة زيد تك © 2026
+            </div>
+        </div>
+    </footer>
+
+    <a class="zt-whatsapp-float" href="{{ whatsapp_url }}" target="_blank" rel="noopener" aria-label="تواصل عبر واتساب">
+        <i class="bi bi-whatsapp" aria-hidden="true"></i>
+    </a>
+
+    <script src="{% static 'js/landing.js' %}" defer></script>
+</body>
+</html>

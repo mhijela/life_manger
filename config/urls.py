@@ -8,7 +8,8 @@ from apps.core.health import healthz
 urlpatterns = [
     path('healthz/', healthz, name='healthz'),
     path('admin/', admin.site.urls),
-    path('', include('apps.dashboard.urls')),
+    path('', include('apps.website.urls')),
+    path('dashboard/', include('apps.dashboard.urls')),
     path('search/', include('apps.core.urls')),
     path('accounts/', include('apps.accounts.urls')),
     path('subscribers/', include('apps.subscribers.urls')),

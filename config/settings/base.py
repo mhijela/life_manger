@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django_celery_beat',
     'apps.accounts',
+    'apps.website',
     'apps.dashboard',
     'apps.subscribers',
     'apps.subscriptions',
@@ -101,7 +102,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
-LOGOUT_REDIRECT_URL = 'accounts:login'
+LOGOUT_REDIRECT_URL = 'website:index'
 
 # Pagination default (overridden by SystemSettings)
 PAGINATION_SIZE = 20
