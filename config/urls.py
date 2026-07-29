@@ -2,12 +2,12 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import RedirectView
 from django.views.static import serve
 from apps.core.health import healthz
 
 urlpatterns = [
     path('healthz/', healthz, name='healthz'),
-    path('admin/', admin.site.urls),
     path('', include('apps.website.urls')),
     path('dashboard/', include('apps.dashboard.urls')),
     path('search/', include('apps.core.urls')),
@@ -24,6 +24,19 @@ urlpatterns = [
     path('settings/', include('apps.settings_app.urls')),
 ]
 
+if settings.ENABLE_DJANGO_ADMIN:
+    urlpatterns.insert(1, path(settings.ADMIN_URL, admin.site.urls))
+else:
+    # إخفاء المسار المعروف دون عرض صفحة 404 التقنية
+    urlpatterns.insert(1, path(
+        'admin/',
+        RedirectView.as_view(pattern_name='website:index', permanent=False),
+    ))
+    urlpatterns.insert(2, path(
+        'admin/<path:rest>',
+        RedirectView.as_view(pattern_name='website:index', permanent=False),
+    ))
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 else:
@@ -31,7 +44,6 @@ else:
     urlpatterns += [
         re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     ]
-
 admin.site.site_header = 'نظام إدارة شبكة الإنترنت'
 admin.site.site_title = 'INMS'
 admin.site.index_title = 'لوحة الإدارة'

@@ -104,6 +104,10 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'website:index'
 
+# Django admin — معطّل افتراضياً (المسار /admin/ يُرجع 404)
+ENABLE_DJANGO_ADMIN = config('ENABLE_DJANGO_ADMIN', default=False, cast=bool)
+ADMIN_URL = config('ADMIN_URL', default='admin/').strip().strip('/') + '/'
+
 # Pagination default (overridden by SystemSettings)
 PAGINATION_SIZE = 20
 
